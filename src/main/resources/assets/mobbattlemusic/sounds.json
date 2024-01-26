@@ -1,0 +1,29 @@
+{
+	"non_aggro_track":
+	{
+		"category": "records",
+		"sounds": [{
+			"name": "mobbattlemusic:non_aggro_track",
+			"stream": true,
+			"volume": 0.6
+		}]
+	},
+	"aggro_track":
+	{
+		"category": "records",
+		"sounds": [{
+			"name": "mobbattlemusic:aggro_track",
+			"stream": true,
+			"volume": 0.6
+		}]
+	},
+	"player_track":
+	{
+		"category": "records",
+		"sounds": [{
+			"name": "mobbattlemusic:player_track",
+			"stream": true,
+			"volume": 0.6
+		}]
+	}
+}
