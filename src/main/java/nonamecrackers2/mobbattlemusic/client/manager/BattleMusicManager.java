@@ -6,11 +6,15 @@ import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -27,6 +31,8 @@ import nonamecrackers2.mobbattlemusic.client.sound.TrackType;
 
 public class BattleMusicManager
 {
+	private static final Logger LOGGER = LogManager.getLogger();
+	public static final SoundSource DEFAULT_SOUND_SOURCE = SoundSource.RECORDS;
 	public static final int SEARCH_RADIUS = 64;
 	public static final int PANIC_RADIUS = 24;
 	public static final int MAX_ENTITIES_FOR_MAX_VOLUME = 5;
@@ -104,6 +110,18 @@ public class BattleMusicManager
 		if (closestAggressor != null && PANIC_CONDITIONS.test(this.player, closestAggressor) && !(this.panickingFrom instanceof Player))
 			this.panickingFrom = closestAggressor;
 		
+		var iterator = this.tracks.entrySet().iterator();
+		while (iterator.hasNext())
+		{
+			var entry = iterator.next();
+			MobBattleTrack track = entry.getValue();
+			if (track.isStopped() || !this.minecraft.getSoundManager().isActive(track))
+			{
+				LOGGER.debug("Removing track {}, it is no longer playing", track);
+				iterator.remove();
+			}
+		}
+		
 		TrackType priority = this.getPriorityTrack(enemiesCount, aggroCount);
 		for (TrackType type : TrackType.values())
 		{
@@ -116,25 +134,17 @@ public class BattleMusicManager
 				track.setTargetedVolume(volume);
 			});
 		}
-		
-		var iterator = this.tracks.entrySet().iterator();
-		while (iterator.hasNext())
-		{
-			var entry = iterator.next();
-			MobBattleTrack track = entry.getValue();
-			if (track.isStopped())
-				iterator.remove();
-		}
 	}
 	
 	private void initiateAndOrUpdateTrack(TrackType type, boolean allowNewTracks, Consumer<MobBattleTrack> consumer)
 	{
 		MobBattleTrack track;
-		if (allowNewTracks)
+		if (allowNewTracks && this.minecraft.options.getSoundSourceVolume(BattleMusicManager.DEFAULT_SOUND_SOURCE) > 0.0F && this.minecraft.options.getSoundSourceVolume(SoundSource.MASTER) > 0.0F)
 		{
 			track = this.tracks.computeIfAbsent(type, t -> {
 				var tr = new MobBattleTrack(type.getTrack(), type.getFadeTime());
 				this.minecraft.getSoundManager().queueTickingSound(tr);
+				LOGGER.debug("Beginning track {}", type);
 				return tr;
 			});
 		}
@@ -159,6 +169,18 @@ public class BattleMusicManager
 	{
 		this.panickingFrom = mob;
 		this.panicTicks = time;
+	}
+	
+	public void reload()
+	{
+		var iterator = this.tracks.values().iterator();
+		while (iterator.hasNext())
+		{
+			var track = iterator.next();
+			track.forceStop();
+			iterator.remove();
+			LOGGER.debug("Reloading mob battle music");
+		}
 	}
 	
 	private @Nullable TrackType getPriorityTrack(int enemyCount, int aggroCount)

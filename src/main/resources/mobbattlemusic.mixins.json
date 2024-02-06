@@ -6,7 +6,8 @@
 	"mixins": [
 	],
 	"client": [
-		"MixinLivingEntity"
+		"MixinLivingEntity",
+		"MixinSoundEngine"
 	],
 	"minVersion": "0.8"
 }

@@ -4,6 +4,7 @@ import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import nonamecrackers2.mobbattlemusic.client.manager.BattleMusicManager;
 
 public class MobBattleTrack extends AbstractTickableSoundInstance
 {
@@ -14,7 +15,7 @@ public class MobBattleTrack extends AbstractTickableSoundInstance
 	
 	public MobBattleTrack(SoundEvent event, int fadeTime)
 	{
-		super(event, SoundSource.RECORDS, SoundInstance.createUnseededRandom());
+		super(event, BattleMusicManager.DEFAULT_SOUND_SOURCE, SoundInstance.createUnseededRandom());
 		this.fadeTime = fadeTime;
 		this.looping = true;
 		this.delay = 0;
@@ -44,5 +45,10 @@ public class MobBattleTrack extends AbstractTickableSoundInstance
 	public boolean canStartSilent()
 	{
 		return true;
+	}
+	
+	public void forceStop()
+	{
+		this.stop();
 	}
 }

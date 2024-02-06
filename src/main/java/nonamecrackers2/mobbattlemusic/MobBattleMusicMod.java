@@ -27,6 +27,7 @@ public class MobBattleMusicMod
 	{
 		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		modEventBus.addListener(MobBattleMusicClientCapabilities::registerCapabilities);
+		modEventBus.addListener(MobBattleMusicClientEvents::onSoundEngineLoad);
 		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 		forgeBus.addGenericListener(Level.class, MobBattleMusicClientCapabilities::attachLevelCapabilities);
 		forgeBus.register(MobBattleMusicClientEvents.class);
