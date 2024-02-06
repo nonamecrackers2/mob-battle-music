@@ -13,16 +13,20 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import com.google.common.collect.Multimap;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.resources.sounds.TickableSoundInstance;
 import net.minecraft.client.sounds.ChannelAccess;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.sounds.SoundSource;
+import nonamecrackers2.mobbattlemusic.client.init.MobBattleMusicClientCapabilities;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleTrack;
 
 @Mixin(SoundEngine.class)
 public abstract class MixinSoundEngine
 {
+	@Shadow
+	private Map<SoundInstance, ChannelAccess.ChannelHandle> instanceToChannel;
 	@Shadow
 	private Map<SoundInstance, Integer> soundDeleteTime;
 	@Shadow
@@ -45,4 +49,34 @@ public abstract class MixinSoundEngine
 			this.tickingSounds.remove(track);
 		}
 	}
+	
+	//Update music tracks volume when the mob battle music is playing, so we can make it fade out instead of cutting out abruptly
+	@Inject(method = "tickNonPaused", at = @At("TAIL"))
+	public void mobbattlemusic$tail_tickNonPaused(CallbackInfo ci)
+	{
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level != null)
+		{
+			mc.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> 
+			{
+				if (manager.isPlaying())
+				{
+					for (SoundInstance instance : this.instanceBySource.get(SoundSource.MUSIC))
+					{
+						var channel = this.instanceToChannel.get(instance);
+						if (channel != null)
+						{
+							float volume = this.calculateVolume(instance);
+							channel.execute(c -> {
+								c.setVolume(volume);
+							});
+						}
+					}
+				}
+			});
+		}
+	}
+	
+	@Shadow
+	protected abstract float calculateVolume(SoundInstance instance);
 }

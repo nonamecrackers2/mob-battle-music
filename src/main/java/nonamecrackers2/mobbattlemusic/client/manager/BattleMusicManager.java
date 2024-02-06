@@ -13,7 +13,9 @@ import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.AbstractSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -23,11 +25,15 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.monster.Witch;
+import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.TieredItem;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.TrackType;
+import nonamecrackers2.mobbattlemusic.mixin.MixinAbstractSoundInstance;
+import nonamecrackers2.mobbattlemusic.mixin.MixinMusicManagerAccessor;
 
 public class BattleMusicManager
 {
@@ -46,7 +52,6 @@ public class BattleMusicManager
 	private final Minecraft minecraft;
 	private final ClientLevel level;
 	private final Map<TrackType, MobBattleTrack> tracks = Maps.newEnumMap(TrackType.class);
-	private final LocalPlayer player;
 	private int panicTicks;
 	private @Nullable LivingEntity panickingFrom;
 	
@@ -54,7 +59,6 @@ public class BattleMusicManager
 	{
 		this.minecraft = mc;
 		this.level = level;
-		this.player = mc.player;
 	}
 	
 	public void tick()
@@ -64,7 +68,7 @@ public class BattleMusicManager
 		{
 			if (this.panickingFrom.isAlive())
 			{
-				if (PANIC_CONDITIONS.test(this.player, this.panickingFrom) && this.player.hasLineOfSight(this.panickingFrom))
+				if (PANIC_CONDITIONS.test(this.minecraft.player, this.panickingFrom) && this.minecraft.player.hasLineOfSight(this.panickingFrom))
 					flag = false;
 			}
 			else
@@ -90,13 +94,13 @@ public class BattleMusicManager
 		int aggroCount = 0;
 		Mob closestAggressor = null;
 		double distance = -1.0D;
-		for (Mob mob : this.level.getNearbyEntities(Mob.class, TARGETING_CONDITIONS, this.player, this.player.getBoundingBox().inflate(SEARCH_RADIUS)))
+		for (Mob mob : this.level.getNearbyEntities(Mob.class, TARGETING_CONDITIONS, this.minecraft.player, this.minecraft.player.getBoundingBox().inflate(SEARCH_RADIUS)))
 		{
-			if (COUNTS_TOWARDS_MOB_COUNT.test(mob) && this.player.hasLineOfSight(mob))
+			if (COUNTS_TOWARDS_MOB_COUNT.test(mob) && this.minecraft.player.hasLineOfSight(mob))
 			{
-				if (mob.isAggressive() && this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox()))
+				if (this.isMobAggressive(mob) && this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox()))
 				{
-					double d = mob.distanceTo(this.player);
+					double d = mob.distanceTo(this.minecraft.player);
 					if (distance == -1.0D || distance > d)
 					{
 						closestAggressor = mob;
@@ -107,7 +111,7 @@ public class BattleMusicManager
 				enemiesCount++;
 			}
 		}
-		if (closestAggressor != null && PANIC_CONDITIONS.test(this.player, closestAggressor) && !(this.panickingFrom instanceof Player))
+		if (closestAggressor != null && PANIC_CONDITIONS.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
 			this.panickingFrom = closestAggressor;
 		
 		var iterator = this.tracks.entrySet().iterator();
@@ -134,6 +138,19 @@ public class BattleMusicManager
 				track.setTargetedVolume(volume);
 			});
 		}
+		
+		if (this.isPlaying())
+			fadeAndStopMinecraftMusic(this.minecraft.getMusicManager());
+	}
+	
+	private boolean isMobAggressive(Mob mob)
+	{
+		if (mob instanceof Warden warden)
+			return warden.getClientAngerLevel() > 50;
+		else if (mob instanceof Witch)
+			return mob.distanceTo(this.minecraft.player) < 12.0D;
+		else
+			return mob.isAggressive();
 	}
 	
 	private void initiateAndOrUpdateTrack(TrackType type, boolean allowNewTracks, Consumer<MobBattleTrack> consumer)
@@ -161,7 +178,7 @@ public class BattleMusicManager
 		Entity entity = source.getEntity();
 		if (entity instanceof Mob mob && entity instanceof Enemy && !(this.panickingFrom instanceof Player))
 			this.panic(mob, MAX_PANIC_TIME);
-		else if (entity instanceof Player player && player != this.player && (player.getMainHandItem().getItem() instanceof TieredItem || source.getDirectEntity() instanceof Projectile))
+		else if (entity instanceof Player player && player != this.minecraft.player && (player.getMainHandItem().getItem() instanceof TieredItem || source.getDirectEntity() instanceof Projectile))
 			this.panic(player, MAX_PANIC_TIME_PLAYER);
 	}
 	
@@ -181,6 +198,11 @@ public class BattleMusicManager
 			iterator.remove();
 			LOGGER.debug("Reloading mob battle music");
 		}
+	}
+	
+	public boolean isPlaying()
+	{
+		return !this.tracks.isEmpty();
 	}
 	
 	private @Nullable TrackType getPriorityTrack(int enemyCount, int aggroCount)
@@ -203,6 +225,21 @@ public class BattleMusicManager
 			return Mth.clamp((float)enemyCount / (float)MAX_ENTITIES_FOR_MAX_VOLUME, 0.0F, 1.0F);
 		default:
 			return 1.0F;
+		}
+	}
+	
+	private static void fadeAndStopMinecraftMusic(MusicManager manager)
+	{
+		SoundInstance currentMusic = ((MixinMusicManagerAccessor)manager).mobbattlemusic$getCurrentMusic();
+		if (currentMusic instanceof AbstractSoundInstance)
+		{
+			MixinAbstractSoundInstance mixinCurrentMusic = (MixinAbstractSoundInstance)currentMusic;
+			if (currentMusic.getVolume() > 0.0F)
+			{
+				mixinCurrentMusic.mobbattlemusic$setVolume(mixinCurrentMusic.mobbattlemusic$getVolume() - 0.01F);
+				if (currentMusic.getVolume() <= 0.0F)
+					manager.stopPlaying();
+			}
 		}
 	}
 }
