@@ -1,28 +1,25 @@
 package nonamecrackers2.mobbattlemusic.client.sound;
 
-import java.util.function.Supplier;
-
-import net.minecraft.sounds.SoundEvent;
-import nonamecrackers2.mobbattlemusic.common.init.MobBattleMusicSoundEvents;
+import net.minecraft.resources.ResourceLocation;
 
 public enum TrackType
 {
-	NON_AGGRESSIVE(MobBattleMusicSoundEvents.NON_AGGRO_TRACK, 120),
-	AGGRESSIVE(MobBattleMusicSoundEvents.AGGRO_TRACK, 40),
-	PLAYER(MobBattleMusicSoundEvents.PLAYER_TRACK, 20);
+	NON_AGGRESSIVE(MobBattleMusicSounds.NON_AGGRO_TRACK, 120),
+	AGGRESSIVE(MobBattleMusicSounds.AGGRO_TRACK, 40),
+	PLAYER(MobBattleMusicSounds.PLAYER_TRACK, 20);
 	
-	private final Supplier<SoundEvent> track;
+	private final ResourceLocation track;
 	private final int fadeTime;
 	
-	private TrackType(Supplier<SoundEvent> track, int fadeTime)
+	private TrackType(ResourceLocation track, int fadeTime)
 	{ 
 		this.track = track;
 		this.fadeTime = fadeTime;
 	}
 	
-	public SoundEvent getTrack()
+	public ResourceLocation getTrack()
 	{
-		return this.track.get();
+		return this.track;
 	}
 	
 	public int getFadeTime()

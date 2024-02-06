@@ -9,7 +9,6 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import nonamecrackers2.mobbattlemusic.client.event.MobBattleMusicClientEvents;
 import nonamecrackers2.mobbattlemusic.client.init.MobBattleMusicClientCapabilities;
-import nonamecrackers2.mobbattlemusic.common.init.MobBattleMusicSoundEvents;
 
 @Mod(MobBattleMusicMod.MODID)
 public class MobBattleMusicMod
@@ -20,7 +19,6 @@ public class MobBattleMusicMod
 	{
 		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		modEventBus.addListener(this::clientSetup);
-		MobBattleMusicSoundEvents.register(modEventBus);
 	}
 	
 	public void clientSetup(FMLClientSetupEvent event)

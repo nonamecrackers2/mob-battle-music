@@ -177,7 +177,7 @@ public class BattleMusicManager
 		while (iterator.hasNext())
 		{
 			var track = iterator.next();
-			track.forceStop();
+			track.stop();
 			iterator.remove();
 			LOGGER.debug("Reloading mob battle music");
 		}
