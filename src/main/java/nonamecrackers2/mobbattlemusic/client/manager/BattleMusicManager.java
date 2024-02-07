@@ -16,6 +16,8 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
+import net.minecraft.client.sounds.SoundEngine;
+import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -32,12 +34,15 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.TieredItem;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.TrackType;
+import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
 import nonamecrackers2.mobbattlemusic.mixin.MixinAbstractSoundInstance;
 import nonamecrackers2.mobbattlemusic.mixin.MixinMusicManagerAccessor;
+import nonamecrackers2.mobbattlemusic.mixin.MixinSoundEngineAccessor;
+import nonamecrackers2.mobbattlemusic.mixin.MixinSoundManagerAccessor;
 
 public class BattleMusicManager
 {
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger("mobbattlemusic/BattleMusicManager");
 	public static final SoundSource DEFAULT_SOUND_SOURCE = SoundSource.RECORDS;
 	public static final int SEARCH_RADIUS = 64;
 	public static final int PANIC_RADIUS = 24;
@@ -129,7 +134,7 @@ public class BattleMusicManager
 		TrackType priority = this.getPriorityTrack(enemiesCount, aggroCount);
 		for (TrackType type : TrackType.values())
 		{
-			float trackDesiredVolume = getTrackVolume(type, enemiesCount, aggroCount);
+			float trackDesiredVolume = shouldStopTracksForModCompat(this.minecraft.getSoundManager()) ? 0.0F : getTrackVolume(type, enemiesCount, aggroCount);
 			this.initiateAndOrUpdateTrack(type, priority == type && trackDesiredVolume > 0.0F, track -> 
 			{
 				float volume = 0.0F;
@@ -241,5 +246,18 @@ public class BattleMusicManager
 					manager.stopPlaying();
 			}
 		}
+	}
+	
+	private static boolean shouldStopTracksForModCompat(SoundManager manager)
+	{
+		SoundEngine engine = ((MixinSoundManagerAccessor)manager).mobbattlemusic$getSoundEngine();
+		MixinSoundEngineAccessor accessor = (MixinSoundEngineAccessor)engine;
+		for (SoundInstance sound : accessor.mobbattlemusic$getInstanceToChannel().keySet())
+		{
+			var clazz = MobBattleMusicCompat.getWitherStormModBossThemeLoopClass();
+			if (clazz != null && clazz.isAssignableFrom(sound.getClass()))
+				return true;
+		}
+		return false;
 	}
 }

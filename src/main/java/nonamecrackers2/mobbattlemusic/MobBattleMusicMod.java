@@ -9,6 +9,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import nonamecrackers2.mobbattlemusic.client.event.MobBattleMusicClientEvents;
 import nonamecrackers2.mobbattlemusic.client.init.MobBattleMusicClientCapabilities;
+import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
 
 @Mod(MobBattleMusicMod.MODID)
 public class MobBattleMusicMod
@@ -29,6 +30,9 @@ public class MobBattleMusicMod
 		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
 		forgeBus.addGenericListener(Level.class, MobBattleMusicClientCapabilities::attachLevelCapabilities);
 		forgeBus.register(MobBattleMusicClientEvents.class);
+		event.enqueueWork(() -> {
+			MobBattleMusicCompat.checkModCompat();
+		});
 	}
 	
 	public static ResourceLocation id(String path)

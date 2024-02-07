@@ -10,7 +10,9 @@
 		"MixinSoundEngine",
 		"MixinMusicManager",
 		"MixinAbstractSoundInstance",
-		"MixinMusicManagerAccessor"
+		"MixinMusicManagerAccessor",
+		"MixinSoundEngineAccessor",
+		"MixinSoundManagerAccessor"
 	],
 	"minVersion": "0.8"
 }
