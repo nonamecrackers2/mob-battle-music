@@ -32,6 +32,7 @@ import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.TieredItem;
+import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.TrackType;
 import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
@@ -44,16 +45,11 @@ public class BattleMusicManager
 {
 	private static final Logger LOGGER = LogManager.getLogger("mobbattlemusic/BattleMusicManager");
 	public static final SoundSource DEFAULT_SOUND_SOURCE = SoundSource.RECORDS;
-	public static final int SEARCH_RADIUS = 64;
-	public static final int PANIC_RADIUS = 24;
-	public static final int MAX_ENTITIES_FOR_MAX_VOLUME = 5;
-	public static final int MAX_PANIC_TIME = 100;
-	public static final int MAX_PANIC_TIME_PLAYER = 400;
 	private static final Predicate<LivingEntity> COUNTS_TOWARDS_MOB_COUNT = e -> {
-		return e instanceof Enemy && !(e instanceof Creeper);
+		return e instanceof Enemy && !(e instanceof Creeper) && !MobBattleMusicConfig.CLIENT.ignoredMobs.get().stream().anyMatch(s -> s.equals(e.getEncodeId()));
 	};
-	private static final TargetingConditions TARGETING_CONDITIONS = TargetingConditions.forCombat().ignoreLineOfSight().range(SEARCH_RADIUS);
-	private static final TargetingConditions PANIC_CONDITIONS = TARGETING_CONDITIONS.copy().range(PANIC_RADIUS);
+	private final TargetingConditions targetingConditions = TargetingConditions.forCombat().ignoreLineOfSight().range(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get());
+	private final TargetingConditions panicConditions = this.targetingConditions.copy().range(MobBattleMusicConfig.CLIENT.threatRadius.get());
 	private final Minecraft minecraft;
 	private final ClientLevel level;
 	private final Map<TrackType, MobBattleTrack> tracks = Maps.newEnumMap(TrackType.class);
@@ -73,7 +69,7 @@ public class BattleMusicManager
 		{
 			if (this.panickingFrom.isAlive())
 			{
-				if (PANIC_CONDITIONS.test(this.minecraft.player, this.panickingFrom) && this.minecraft.player.hasLineOfSight(this.panickingFrom))
+				if (this.panicConditions.test(this.minecraft.player, this.panickingFrom) && this.minecraft.player.hasLineOfSight(this.panickingFrom))
 					flag = false;
 			}
 			else
@@ -92,18 +88,18 @@ public class BattleMusicManager
 		}
 		else
 		{
-			this.panicTicks = MAX_PANIC_TIME;
+			this.panicTicks = MobBattleMusicConfig.CLIENT.aggressiveCooldown.get() * 20;
 		}
 		
 		int enemiesCount = 0;
 		int aggroCount = 0;
 		Mob closestAggressor = null;
 		double distance = -1.0D;
-		for (Mob mob : this.level.getNearbyEntities(Mob.class, TARGETING_CONDITIONS, this.minecraft.player, this.minecraft.player.getBoundingBox().inflate(SEARCH_RADIUS)))
+		for (Mob mob : this.level.getNearbyEntities(Mob.class, this.targetingConditions, this.minecraft.player, this.minecraft.player.getBoundingBox().inflate(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get())))
 		{
 			if (COUNTS_TOWARDS_MOB_COUNT.test(mob) && this.minecraft.player.hasLineOfSight(mob))
 			{
-				if (this.isMobAggressive(mob) && this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox()))
+				if (this.isMobAggressive(mob) && (!MobBattleMusicConfig.CLIENT.onlyCountVisibleMobs.get() || this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox())))
 				{
 					double d = mob.distanceTo(this.minecraft.player);
 					if (distance == -1.0D || distance > d)
@@ -116,7 +112,7 @@ public class BattleMusicManager
 				enemiesCount++;
 			}
 		}
-		if (closestAggressor != null && PANIC_CONDITIONS.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
+		if (closestAggressor != null && this.panicConditions.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
 			this.panickingFrom = closestAggressor;
 		
 		var iterator = this.tracks.entrySet().iterator();
@@ -182,9 +178,9 @@ public class BattleMusicManager
 	{
 		Entity entity = source.getEntity();
 		if (entity instanceof Mob mob && entity instanceof Enemy && !(this.panickingFrom instanceof Player))
-			this.panic(mob, MAX_PANIC_TIME);
+			this.panic(mob, MobBattleMusicConfig.CLIENT.aggressiveCooldown.get() * 20);
 		else if (entity instanceof Player player && player != this.minecraft.player && (player.getMainHandItem().getItem() instanceof TieredItem || source.getDirectEntity() instanceof Projectile))
-			this.panic(player, MAX_PANIC_TIME_PLAYER);
+			this.panic(player, MobBattleMusicConfig.CLIENT.aggressivePlayerCooldown.get() * 20);
 	}
 	
 	private void panic(LivingEntity mob, int time)
@@ -227,7 +223,7 @@ public class BattleMusicManager
 		switch (type)
 		{
 		case NON_AGGRESSIVE:
-			return Mth.clamp((float)enemyCount / (float)MAX_ENTITIES_FOR_MAX_VOLUME, 0.0F, 1.0F);
+			return Mth.clamp((float)enemyCount / (float)MobBattleMusicConfig.CLIENT.maxMobsForMaxVolume.get(), 0.0F, 1.0F);
 		default:
 			return 1.0F;
 		}

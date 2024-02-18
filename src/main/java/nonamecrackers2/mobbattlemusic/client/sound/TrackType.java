@@ -1,5 +1,7 @@
 package nonamecrackers2.mobbattlemusic.client.sound;
 
+import com.google.common.base.Supplier;
+
 import net.minecraft.resources.ResourceLocation;
 
 public enum TrackType
@@ -9,9 +11,9 @@ public enum TrackType
 	PLAYER(MobBattleMusicSounds.PLAYER_TRACK, 20);
 	
 	private final ResourceLocation track;
-	private final int fadeTime;
+	private final Supplier<Integer> fadeTime;
 	
-	private TrackType(ResourceLocation track, int fadeTime)
+	private TrackType(ResourceLocation track, Supplier<Integer> fadeTime)
 	{ 
 		this.track = track;
 		this.fadeTime = fadeTime;
@@ -24,6 +26,6 @@ public enum TrackType
 	
 	public int getFadeTime()
 	{
-		return this.fadeTime;
+		return this.fadeTime.get();
 	}
 }

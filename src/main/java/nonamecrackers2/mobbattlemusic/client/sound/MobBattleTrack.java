@@ -4,6 +4,7 @@ import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.resources.sounds.TickableSoundInstance;
 import net.minecraft.resources.ResourceLocation;
+import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.manager.BattleMusicManager;
 
 public class MobBattleTrack extends AbstractSoundInstance implements TickableSoundInstance
@@ -30,7 +31,7 @@ public class MobBattleTrack extends AbstractSoundInstance implements TickableSou
 		float delta = (this.targetedVolume - this.volume) / this.fadeTime;
 		this.volume += delta;
 		
-		if (this.emptyTime++ > MAX_EMPTY_TIME)
+		if (this.emptyTime++ > MobBattleMusicConfig.CLIENT.musicTrackEmptyTime.get() * 20)
 			this.stop();
 		
 		if (this.volume > 0.01F)

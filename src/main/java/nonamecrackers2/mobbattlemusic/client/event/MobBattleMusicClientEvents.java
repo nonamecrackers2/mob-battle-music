@@ -4,11 +4,30 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.sound.SoundEngineLoadEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.config.ModConfig;
+import nonamecrackers2.crackerslib.client.event.impl.ConfigMenuButtonEvent;
+import nonamecrackers2.crackerslib.client.event.impl.RegisterConfigScreensEvent;
+import nonamecrackers2.crackerslib.client.gui.ConfigHomeScreen;
+import nonamecrackers2.crackerslib.client.gui.title.TextTitle;
+import nonamecrackers2.mobbattlemusic.MobBattleMusicMod;
+import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.init.MobBattleMusicClientCapabilities;
 import nonamecrackers2.mobbattlemusic.client.manager.BattleMusicManager;
 
 public class MobBattleMusicClientEvents
 {
+	public static void registerConfigScreen(RegisterConfigScreensEvent event)
+	{
+		event.builder(ConfigHomeScreen.builder(TextTitle.ofModDisplayName(MobBattleMusicMod.MODID))
+				.crackersDefault("https://github.com/nonamecrackers2/mob-battle-music/issues").build()
+		).addSpec(ModConfig.Type.CLIENT, MobBattleMusicConfig.CLIENT_SPEC).register();
+	}
+	
+	public static void registerConfigMenuButton(ConfigMenuButtonEvent event)
+	{
+		event.defaultButtonWithSingleCharacter('M', 0xFF85FF75);
+	}
+	
 	@SubscribeEvent
 	public static void onClientTick(TickEvent.ClientTickEvent event)
 	{

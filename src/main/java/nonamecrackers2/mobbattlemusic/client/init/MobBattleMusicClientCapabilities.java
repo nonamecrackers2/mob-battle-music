@@ -8,7 +8,7 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.CapabilityToken;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
-import nonamecrackers2.crackerslib.capability.CapUtil;
+import nonamecrackers2.crackerslib.common.capability.CapUtil;
 import nonamecrackers2.mobbattlemusic.MobBattleMusicMod;
 import nonamecrackers2.mobbattlemusic.client.manager.BattleMusicManager;
 
