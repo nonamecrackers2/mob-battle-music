@@ -25,7 +25,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
-import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.warden.Warden;
@@ -46,7 +45,7 @@ public class BattleMusicManager
 	private static final Logger LOGGER = LogManager.getLogger("mobbattlemusic/BattleMusicManager");
 	public static final SoundSource DEFAULT_SOUND_SOURCE = SoundSource.RECORDS;
 	private static final Predicate<LivingEntity> COUNTS_TOWARDS_MOB_COUNT = e -> {
-		return e instanceof Enemy && !(e instanceof Creeper) && !MobBattleMusicConfig.CLIENT.ignoredMobs.get().stream().anyMatch(s -> s.equals(e.getEncodeId()));
+		return e instanceof Enemy && !MobBattleMusicConfig.CLIENT.ignoredMobs.get().stream().anyMatch(s -> s.equals(e.getEncodeId()));
 	};
 	private final TargetingConditions targetingConditions = TargetingConditions.forCombat().ignoreLineOfSight().range(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get());
 	private final TargetingConditions panicConditions = this.targetingConditions.copy().range(MobBattleMusicConfig.CLIENT.threatRadius.get());
@@ -54,6 +53,7 @@ public class BattleMusicManager
 	private final ClientLevel level;
 	private final Map<TrackType, MobBattleTrack> tracks = Maps.newEnumMap(TrackType.class);
 	private int panicTicks;
+	private int panicRefreshTime;
 	private @Nullable LivingEntity panickingFrom;
 	
 	public BattleMusicManager(Minecraft mc, ClientLevel level)
@@ -85,11 +85,22 @@ public class BattleMusicManager
 				if (this.panicTicks == 0)
 					this.panickingFrom = null;
 			}
+			if (this.panicRefreshTime > 0)
+				this.panicRefreshTime--;
 		}
 		else
 		{
 			this.panicTicks = MobBattleMusicConfig.CLIENT.aggressiveCooldown.get() * 20;
+			this.panicRefreshTime++;
+			if (this.panicRefreshTime > 200)
+			{
+				this.panickingFrom = null;
+				this.panicRefreshTime = 0;
+			}
 		}
+//		System.out.println(this.panickingFrom);
+//		System.out.println(this.panicTicks);
+//		System.out.println(this.panicRefreshTime);
 		
 		int enemiesCount = 0;
 		int aggroCount = 0;
@@ -131,10 +142,11 @@ public class BattleMusicManager
 		for (TrackType type : TrackType.values())
 		{
 			float trackDesiredVolume = shouldStopTracksForModCompat(this.minecraft.getSoundManager()) ? 0.0F : getTrackVolume(type, enemiesCount, aggroCount);
-			this.initiateAndOrUpdateTrack(type, priority == type && trackDesiredVolume > 0.0F, track -> 
+			boolean canPlay = type.canPlay();
+			this.initiateAndOrUpdateTrack(type, priority == type && trackDesiredVolume > 0.0F && canPlay, track -> 
 			{
 				float volume = 0.0F;
-				if (type == priority)
+				if (canPlay && type == priority)
 					volume = trackDesiredVolume;
 				track.setTargetedVolume(volume);
 			});
