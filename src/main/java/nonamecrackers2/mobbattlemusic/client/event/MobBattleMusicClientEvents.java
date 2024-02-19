@@ -1,8 +1,10 @@
 package nonamecrackers2.mobbattlemusic.client.event;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.client.event.sound.SoundEngineLoadEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.config.ModConfig;
 import nonamecrackers2.crackerslib.client.event.impl.ConfigMenuButtonEvent;
@@ -34,6 +36,18 @@ public class MobBattleMusicClientEvents
 		Minecraft mc = Minecraft.getInstance();
 		if (event.phase == TickEvent.Phase.END && mc.level != null && !mc.isPaused())
 			mc.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(BattleMusicManager::tick);
+	}
+	
+	@SubscribeEvent
+	public static void onPlayerAttack(AttackEntityEvent event)
+	{
+		Player player = event.getEntity();
+		if (player.level().isClientSide())
+		{
+			player.level().getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> {
+				manager.onAttack(event.getTarget());
+			});
+		}
 	}
 	
 	public static void onSoundEngineLoad(SoundEngineLoadEvent event)

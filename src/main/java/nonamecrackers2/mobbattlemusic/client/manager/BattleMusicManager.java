@@ -52,8 +52,9 @@ public class BattleMusicManager
 	private final Minecraft minecraft;
 	private final ClientLevel level;
 	private final Map<TrackType, MobBattleTrack> tracks = Maps.newEnumMap(TrackType.class);
-	private int panicTicks;
-	private int panicRefreshTime;
+	private int maxThreatRefreshTime;
+	private int threatRefreshTimer;
+	private int threatRemovalTimer;
 	private @Nullable LivingEntity panickingFrom;
 	
 	public BattleMusicManager(Minecraft mc, ClientLevel level)
@@ -64,43 +65,40 @@ public class BattleMusicManager
 	
 	public void tick()
 	{
+		//Determine if the current threat we are panicking from is still valid
 		boolean flag = true;
 		if (this.panickingFrom != null)
 		{
-			if (this.panickingFrom.isAlive())
-			{
-				if (this.panicConditions.test(this.minecraft.player, this.panickingFrom) && this.minecraft.player.hasLineOfSight(this.panickingFrom))
-					flag = false;
-			}
-			else
-			{
-				this.panickingFrom = null;
-			}
+			if (this.panickingFrom.isAlive() && this.panicConditions.test(this.minecraft.player, this.panickingFrom) && this.minecraft.player.hasLineOfSight(this.panickingFrom))
+				flag = false;
 		}
+		//If the threat is no longer valid
 		if (flag)
 		{
-			if (this.panicTicks > 0)
+			//No longer panic from that threat after a specified duration of time. This give the sense, that even
+			//though the threat is gone, the player needs to "calm" down before the aggressive music track
+			//will stop playing
+			if (this.threatRemovalTimer++ > MobBattleMusicConfig.CLIENT.calmDownTime.get() * 20)
 			{
-				this.panicTicks--;
-				if (this.panicTicks == 0)
+				this.threatRemovalTimer = 0;
+				this.panickingFrom = null;
+			}
+			this.threatRefreshTimer = this.maxThreatRefreshTime;
+		}
+		else //If the threat is still valid
+		{
+			this.threatRemovalTimer = 0;
+			//After a certain length of time we will "reevaluate" our current threat by setting it to null.
+			//If the threat is still a threat, our current threat will be re-set to that that threat.
+			//This is mostly used for players who stopped attacking us. Otherwise, the mod will still consider them a threat
+			//and play the player music track even though the player has stopped attacking
+			if (this.threatRefreshTimer > 0)
+			{
+				this.threatRefreshTimer--;
+				if (this.threatRefreshTimer == 0)
 					this.panickingFrom = null;
 			}
-			if (this.panicRefreshTime > 0)
-				this.panicRefreshTime--;
 		}
-		else
-		{
-			this.panicTicks = MobBattleMusicConfig.CLIENT.aggressiveCooldown.get() * 20;
-			this.panicRefreshTime++;
-			if (this.panicRefreshTime > 200)
-			{
-				this.panickingFrom = null;
-				this.panicRefreshTime = 0;
-			}
-		}
-//		System.out.println(this.panickingFrom);
-//		System.out.println(this.panicTicks);
-//		System.out.println(this.panicRefreshTime);
 		
 		int enemiesCount = 0;
 		int aggroCount = 0;
@@ -123,8 +121,8 @@ public class BattleMusicManager
 				enemiesCount++;
 			}
 		}
-		if (closestAggressor != null && this.panicConditions.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
-			this.panickingFrom = closestAggressor;
+		if (closestAggressor != null && this.panickingFrom != closestAggressor && this.panicConditions.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
+			this.panic(closestAggressor, MobBattleMusicConfig.CLIENT.threatReevaluationCooldown.get() * 20);
 		
 		var iterator = this.tracks.entrySet().iterator();
 		while (iterator.hasNext())
@@ -190,15 +188,24 @@ public class BattleMusicManager
 	{
 		Entity entity = source.getEntity();
 		if (entity instanceof Mob mob && entity instanceof Enemy && !(this.panickingFrom instanceof Player))
-			this.panic(mob, MobBattleMusicConfig.CLIENT.aggressiveCooldown.get() * 20);
+			this.panic(mob, MobBattleMusicConfig.CLIENT.threatReevaluationCooldown.get() * 20);
 		else if (entity instanceof Player player && player != this.minecraft.player && (player.getMainHandItem().getItem() instanceof TieredItem || source.getDirectEntity() instanceof Projectile))
-			this.panic(player, MobBattleMusicConfig.CLIENT.aggressivePlayerCooldown.get() * 20);
+			this.panic(player, MobBattleMusicConfig.CLIENT.playerReevaluationCooldown.get() * 20);
+	}
+	
+	public void onAttack(Entity entity)
+	{
+		if (entity instanceof Mob mob && entity instanceof Enemy && !(this.panickingFrom instanceof Player))
+			this.panic(mob, MobBattleMusicConfig.CLIENT.threatReevaluationCooldown.get() * 20);
+		else if (entity instanceof Player player && player != this.minecraft.player && (this.minecraft.player.getMainHandItem().getItem() instanceof TieredItem))
+			this.panic(player, MobBattleMusicConfig.CLIENT.playerReevaluationCooldown.get() * 20);
 	}
 	
 	private void panic(LivingEntity mob, int time)
 	{
 		this.panickingFrom = mob;
-		this.panicTicks = time;
+		this.threatRefreshTimer = time;
+		this.maxThreatRefreshTime = time;
 	}
 	
 	public void reload()
@@ -222,7 +229,7 @@ public class BattleMusicManager
 	{
 		if (this.panickingFrom instanceof Player)
 			return TrackType.PLAYER;
-		else if (aggroCount > 0 || this.panicTicks > 0)
+		else if (aggroCount > 0 || this.panickingFrom != null)
 			return TrackType.AGGRESSIVE;
 		else if (enemyCount > 0)
 			return TrackType.NON_AGGRESSIVE;
