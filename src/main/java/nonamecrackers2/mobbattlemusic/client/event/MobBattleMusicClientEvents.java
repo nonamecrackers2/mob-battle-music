@@ -10,6 +10,7 @@ import net.minecraftforge.fml.config.ModConfig;
 import nonamecrackers2.crackerslib.client.event.impl.ConfigMenuButtonEvent;
 import nonamecrackers2.crackerslib.client.event.impl.RegisterConfigScreensEvent;
 import nonamecrackers2.crackerslib.client.gui.ConfigHomeScreen;
+import nonamecrackers2.crackerslib.client.gui.title.ImageTitle;
 import nonamecrackers2.crackerslib.client.gui.title.TextTitle;
 import nonamecrackers2.mobbattlemusic.MobBattleMusicMod;
 import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
@@ -20,7 +21,7 @@ public class MobBattleMusicClientEvents
 {
 	public static void registerConfigScreen(RegisterConfigScreensEvent event)
 	{
-		event.builder(ConfigHomeScreen.builder(TextTitle.ofModDisplayName(MobBattleMusicMod.MODID))
+		event.builder(ConfigHomeScreen.builder(ImageTitle.ofMod(MobBattleMusicMod.MODID, 512, 256, 0.5F))
 				.crackersDefault("https://github.com/nonamecrackers2/mob-battle-music/issues").build()
 		).addSpec(ModConfig.Type.CLIENT, MobBattleMusicConfig.CLIENT_SPEC).register();
 	}
