@@ -127,9 +127,6 @@ repositories {
     maven {
         url "https://cursemaven.com"
     }
-    flatDir {
-    	dir 'libs'
-    }
 }
 
 dependencies {
@@ -163,8 +160,7 @@ dependencies {
     	jarJar.ranged(it, "[${minecraft_version}-${crackerslib_version},)")
     }
     
-    //implementation fg.deobf("nonamecrackers2:crackerslib-forge:${minecraft_version}-${crackerslib_version}")
-    implementation fg.deobf("nonamecrackers2:crackerslib-forge:1.20.1-0.2")
+    implementation fg.deobf("nonamecrackers2:crackerslib-forge:${minecraft_version}-${crackerslib_version}")
 }
 
 mixin {
