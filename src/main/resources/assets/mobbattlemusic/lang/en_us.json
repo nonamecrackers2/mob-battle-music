@@ -28,7 +28,7 @@
 	"gui.mobbattlemusic.config.nonAggressiveTrackEnabled.description": "Specifies if the non-aggressive music track should play at all",
 	"gui.mobbattlemusic.config.aggressiveTrackEnabled.description": "Specifies if the aggressive music track should play at all",
 	"gui.mobbattlemusic.config.playerTrackEnabled.description": "Specifies if the player music track should play at all",
-	"gui.mobbattlemusic.config.calmDownTime": "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked\nRange 1~300",
+	"gui.mobbattlemusic.config.calmDownTime.description": "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked\nRange 1~300",
 	"gui.mobbattlemusic.config.category.non_aggro.title": "Non-Aggressive Music Track",
 	"gui.mobbattlemusic.config.category.aggro.title": "Aggressive Music Track",
 	"gui.mobbattlemusic.config.category.player.title": "Player Music Track"
