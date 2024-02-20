@@ -12,7 +12,7 @@ displayURL="https://www.curseforge.com/minecraft/mc-mods/mob-battle-music" #opti
 #logoFile="examplemod.png" #optional
 credits="TSEG" #optional
 authors="${mod_authors}" #optional
-#displayTest="IGNORE_ALL_VERSION" # MATCH_VERSION is the default if nothing is specified (#optional)
+displayTest="IGNORE_ALL_VERSION" # MATCH_VERSION is the default if nothing is specified (#optional)
 
 description='''${mod_description}'''
 
