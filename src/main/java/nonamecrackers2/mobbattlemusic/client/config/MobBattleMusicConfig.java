@@ -39,6 +39,7 @@ public class MobBattleMusicConfig
 		public final ForgeConfigSpec.ConfigValue<Double> playerFadeTime;
 		public final ForgeConfigSpec.ConfigValue<Boolean> playerTrackEnabled;
 		public final ForgeConfigSpec.ConfigValue<Integer> calmDownTime;
+		public final ForgeConfigSpec.ConfigValue<Boolean> punchingCountsAsViolence;
 		
 		public ClientConfig(ForgeConfigSpec.Builder builder)
 		{
@@ -87,6 +88,8 @@ public class MobBattleMusicConfig
 			this.playerFadeTime = this.createRangedDoubleValue(builder, 1.0D, 0.05D, 60.0D, "playerFadeTime", ReloadType.NONE, "The time (in seconds) for the player music track to fade in/out");
 			
 			this.playerReevaluationCooldown = this.createRangedIntValue(builder, 20, 1, 300, "playerReevaluationCooldown", ReloadType.NONE, "Specifies the time (in seconds) for the current player threat that is causing the player music track to play to be reevaluated. Will cause the player track to stop playing if the player is no longer attacking or being a threat");
+			
+			this.punchingCountsAsViolence = this.createValue(builder, false, "punchingCountsAsViolence", ReloadType.NONE, "Specifies if punching a player should count towards the player track playing");
 			
 			builder.pop();
 		}

@@ -14,6 +14,7 @@
 	"gui.mobbattlemusic.config.aggressiveTrackEnabled.title": "Enabled",
 	"gui.mobbattlemusic.config.playerTrackEnabled.title": "Enabled",
 	"gui.mobbattlemusic.config.calmDownTime.title": "Calm Down Time",
+	"gui.mobbattlemusic.config.punchingCountsAsViolence.title": "Punching Counts As Violence",
 	"gui.mobbattlemusic.config.maxMobsForMaxVolume.description": "The maximum amount of mobs required for the non-aggressive background music track to reach full volume. Set to '1' for this track type to play at full volume constantly\nRange 1~100",
 	"gui.mobbattlemusic.config.maxMobSearchRadius.description": "The radius mobs must be in in order to count towards music tracks playing\nRange 4~256",
 	"gui.mobbattlemusic.config.threatRadius.description": "Specifies the distance the nearest enemy threat must be in in order for the aggressive/player music tracks to continue to play\nRange 4~256",
@@ -29,6 +30,7 @@
 	"gui.mobbattlemusic.config.aggressiveTrackEnabled.description": "Specifies if the aggressive music track should play at all",
 	"gui.mobbattlemusic.config.playerTrackEnabled.description": "Specifies if the player music track should play at all",
 	"gui.mobbattlemusic.config.calmDownTime.description": "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked\nRange 1~300",
+	"gui.mobbattlemusic.config.punchingCountsAsViolence.description": "Specifies if punching a player should count towards the player track playing",
 	"gui.mobbattlemusic.config.category.non_aggro.title": "Non-Aggressive Music Track",
 	"gui.mobbattlemusic.config.category.aggro.title": "Aggressive Music Track",
 	"gui.mobbattlemusic.config.category.player.title": "Player Music Track"
