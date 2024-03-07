@@ -45,7 +45,7 @@ public class BattleMusicManager
 	private static final Logger LOGGER = LogManager.getLogger("mobbattlemusic/BattleMusicManager");
 	public static final SoundSource DEFAULT_SOUND_SOURCE = SoundSource.RECORDS;
 	private static final Predicate<LivingEntity> COUNTS_TOWARDS_MOB_COUNT = e -> {
-		return e instanceof Enemy && !MobBattleMusicConfig.CLIENT.ignoredMobs.get().stream().anyMatch(s -> s.equals(e.getEncodeId()));
+		return e instanceof Enemy && MobBattleMusicConfig.CLIENT.whiteListMode.get() ? blacklist(e) : !blacklist(e);
 	};
 	private final TargetingConditions targetingConditions = TargetingConditions.forCombat().ignoreLineOfSight().range(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get());
 	private final TargetingConditions panicConditions = this.targetingConditions.copy().range(MobBattleMusicConfig.CLIENT.threatRadius.get());
@@ -61,6 +61,11 @@ public class BattleMusicManager
 	{
 		this.minecraft = mc;
 		this.level = level;
+	}
+	
+	private static boolean blacklist(LivingEntity e)
+	{
+		return MobBattleMusicConfig.CLIENT.ignoredMobs.get().stream().anyMatch(s -> s.equals(e.getEncodeId()));
 	}
 	
 	public void tick()

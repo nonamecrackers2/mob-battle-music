@@ -30,6 +30,7 @@ public class MobBattleMusicConfig
 		public final ForgeConfigSpec.ConfigValue<Integer> threatReevaluationCooldown;
 		public final ForgeConfigSpec.ConfigValue<Integer> playerReevaluationCooldown;
 		public final ForgeConfigSpec.ConfigValue<List<? extends String>> ignoredMobs;
+		public final ForgeConfigSpec.ConfigValue<Boolean> whiteListMode;
 		public final ForgeConfigSpec.ConfigValue<Boolean> onlyCountVisibleMobs;
 		public final ForgeConfigSpec.ConfigValue<Integer> musicTrackEmptyTime;
 		public final ForgeConfigSpec.ConfigValue<Double> nonAggressiveFadeTime;
@@ -54,6 +55,8 @@ public class MobBattleMusicConfig
 			}, v -> {
 				return ResourceLocation.isValidResourceLocation(v);
 			}, "ignoredMobs", ReloadType.NONE, "A list of mobs that should NOT be considered towards music tracks playing");
+			
+			this.whiteListMode = this.createValue(builder, false, "whiteListMode", ReloadType.NONE, "Specifies if the ignored mob list should be used a whitelist instead of a blacklist");
 			
 			this.musicTrackEmptyTime = this.createRangedIntValue(builder, 15, 1, 300, "musicTrackEmptyTime", ReloadType.NONE, "Specifies the time (in seconds) that a music track must not be playing for it to stop completely. Higher time will make it so music tracks won't restart as much if they fade back in for whatever reason");
 			
