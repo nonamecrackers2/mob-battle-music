@@ -33,7 +33,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.TieredItem;
 import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleTrack;
-import nonamecrackers2.mobbattlemusic.client.sound.TrackType;
+import nonamecrackers2.mobbattlemusic.client.sound.track.TrackType;
 import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
 import nonamecrackers2.mobbattlemusic.mixin.MixinAbstractSoundInstance;
 import nonamecrackers2.mobbattlemusic.mixin.MixinMusicManagerAccessor;
