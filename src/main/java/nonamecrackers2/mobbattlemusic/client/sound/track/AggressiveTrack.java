@@ -1,8 +1,8 @@
 package nonamecrackers2.mobbattlemusic.client.sound.track;
 
-import net.minecraft.world.entity.LivingEntity;
 import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleMusicSounds;
+import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 
 public class AggressiveTrack extends TrackType
 {
@@ -12,9 +12,9 @@ public class AggressiveTrack extends TrackType
 	}
 	
 	@Override
-	public boolean canPlay(LivingEntity panickingFrom, int enemyCount, int aggroCount)
+	public boolean canPlay(MobSelection selection)
 	{
-		return MobBattleMusicConfig.CLIENT.aggressiveTrackEnabled.get() && (aggroCount > 0 || panickingFrom != null);
+		return MobBattleMusicConfig.CLIENT.aggressiveTrackEnabled.get() && (selection.count(MobSelection.attacking()) > 0 || selection.panicTarget() != null);
 	}
 	
 	@Override

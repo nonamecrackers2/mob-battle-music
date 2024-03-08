@@ -3,7 +3,7 @@ package nonamecrackers2.mobbattlemusic.client.sound.track;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
+import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 
 public class MobGroupTrack extends TrackType
 {
@@ -18,9 +18,9 @@ public class MobGroupTrack extends TrackType
 	}
 	
 	@Override
-	public boolean canPlay(LivingEntity panickingFrom, int enemyCount, int aggroCount)
+	public boolean canPlay(MobSelection selection)
 	{
-		return panickingFrom != null && panickingFrom.getType().is(this.tag);
+		return selection.panicTarget() != null && selection.panicTarget().getType().is(this.tag);
 	}
 	
 	@Override

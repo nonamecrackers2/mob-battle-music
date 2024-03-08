@@ -22,6 +22,7 @@ public class MobBattleMusicMod
 	public MobBattleMusicMod()
 	{
 		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+		modEventBus.addListener(MobBattleMusicClientEvents::registerReloadListeners);
 		modEventBus.addListener(this::clientSetup);
 		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, MobBattleMusicConfig.CLIENT_SPEC);
 	}

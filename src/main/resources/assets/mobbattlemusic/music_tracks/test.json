@@ -1,0 +1,8 @@
+{
+	"type": "mob_specific",
+	"sound": "mobbattlemusic:test",
+	"priority": 0,
+	"fade_time": 20,
+	"mob": "minecraft:ender_dragon",
+	"mob_selector": "enemies"
+}

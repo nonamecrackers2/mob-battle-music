@@ -50,6 +50,10 @@ public class MobBattleMusicConfig
 
 			this.threatRadius = this.createRangedIntValue(builder, 24, 4, 256, "threatRadius", ReloadType.GAME, "Specifies the distance the nearest enemy threat must be in in order for the aggressive/player music tracks to continue to play");
 			
+			this.threatReevaluationCooldown = this.createRangedIntValue(builder, 5, 1, 300, "threatReevaluationCooldown", ReloadType.NONE, "Specifies the time (in seconds) for the current threat that causes mob-based attacking tracks to play to be reevaluated");
+			
+			this.onlyCountVisibleMobs = this.createValue(builder, true, "onlyCountVisibleMobs", ReloadType.NONE, "If enabled, the mob-based attacking tracks will only play for threats that the player can see on screen");
+			
 			this.ignoredMobs = this.createListValue(builder, String.class, () -> {
 				return Lists.newArrayList("minecraft:creeper");
 			}, v -> {
@@ -60,7 +64,7 @@ public class MobBattleMusicConfig
 			
 			this.musicTrackEmptyTime = this.createRangedIntValue(builder, 15, 1, 300, "musicTrackEmptyTime", ReloadType.NONE, "Specifies the time (in seconds) that a music track must not be playing for it to stop completely. Higher time will make it so music tracks won't restart as much if they fade back in for whatever reason");
 			
-			this.calmDownTime = this.createRangedIntValue(builder, 10, 1, 300, "calmDownTime", ReloadType.NONE, "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked");
+			this.calmDownTime = this.createRangedIntValue(builder, 5, 1, 300, "calmDownTime", ReloadType.NONE, "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked");
 			
 			builder.comment("Non-aggressive music track").push("non_aggro");
 			
@@ -77,10 +81,6 @@ public class MobBattleMusicConfig
 			this.aggressiveTrackEnabled = this.createValue(builder, true, "aggressiveTrackEnabled", ReloadType.NONE, "Specifies if the aggressive music track should play at all");
 			
 			this.aggressiveFadeTime = this.createRangedDoubleValue(builder, 2.0D, 0.05D, 60.0D, "aggressiveFadeTime", ReloadType.NONE, "The time (in seconds) for the aggressive music track to fade in/out");
-			
-			this.threatReevaluationCooldown = this.createRangedIntValue(builder, 5, 1, 300, "threatReevaluationCooldown", ReloadType.NONE, "Specifies the time (in seconds) for the current threat that causes the aggressive music track to play to be reevaluated");
-			
-			this.onlyCountVisibleMobs = this.createValue(builder, true, "onlyCountVisibleMobs", ReloadType.NONE, "If enabled, the aggressive track will only play for threats that the player can see on screen");
 			
 			builder.pop();
 			

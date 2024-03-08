@@ -1,7 +1,7 @@
 package nonamecrackers2.mobbattlemusic.client.sound.track;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
+import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 
 public abstract class TrackType
 {
@@ -21,12 +21,18 @@ public abstract class TrackType
 		return this.track;
 	}
 
-	public float getVolume(int enemyCount, int aggroCount)
+	public float getVolume(MobSelection selection)
 	{
 		return 1.0F;
 	}
 	
 	public abstract int getFadeTime();
 	
-	public abstract boolean canPlay(LivingEntity panickingFrom, int enemyCount, int aggroCount);
+	public abstract boolean canPlay(MobSelection selection);
+	
+	@Override
+	public String toString()
+	{
+		return String.format("%s[%s]", this.getClass().getSimpleName(), this.track);
+	}
 }

@@ -25,5 +25,14 @@
 			"stream": true,
 			"volume": 0.6
 		}]
+	},
+	"test":
+	{
+		"category": "records",
+		"sounds": [{
+			"name": "mobbattlemusic:test",
+			"stream": true,
+			"volume": 0.6
+		}]
 	}
 }

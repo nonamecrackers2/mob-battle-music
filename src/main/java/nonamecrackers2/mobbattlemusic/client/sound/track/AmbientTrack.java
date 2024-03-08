@@ -1,9 +1,9 @@
 package nonamecrackers2.mobbattlemusic.client.sound.track;
 
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
 import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleMusicSounds;
+import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 
 public class AmbientTrack extends TrackType
 {
@@ -13,9 +13,9 @@ public class AmbientTrack extends TrackType
 	}
 	
 	@Override
-	public boolean canPlay(LivingEntity panickingFrom, int enemyCount, int aggroCount)
+	public boolean canPlay(MobSelection selection)
 	{
-		return MobBattleMusicConfig.CLIENT.nonAggressiveTrackEnabled.get() && enemyCount > 0;
+		return MobBattleMusicConfig.CLIENT.nonAggressiveTrackEnabled.get() && selection.count(MobSelection.enemies()) > 0;
 	}
 	
 	@Override
@@ -25,8 +25,8 @@ public class AmbientTrack extends TrackType
 	}
 	
 	@Override
-	public float getVolume(int enemyCount, int aggroCount)
+	public float getVolume(MobSelection selection)
 	{
-		return Mth.clamp((float)enemyCount / (float)MobBattleMusicConfig.CLIENT.maxMobsForMaxVolume.get(), 0.0F, 1.0F);
+		return Mth.clamp((float)selection.count(MobSelection.enemies()) / (float)MobBattleMusicConfig.CLIENT.maxMobsForMaxVolume.get(), 0.0F, 1.0F);
 	}
 }

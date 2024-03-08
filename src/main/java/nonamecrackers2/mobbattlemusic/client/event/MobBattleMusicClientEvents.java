@@ -2,6 +2,7 @@ package nonamecrackers2.mobbattlemusic.client.event;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.sound.SoundEngineLoadEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
@@ -11,11 +12,11 @@ import nonamecrackers2.crackerslib.client.event.impl.ConfigMenuButtonEvent;
 import nonamecrackers2.crackerslib.client.event.impl.RegisterConfigScreensEvent;
 import nonamecrackers2.crackerslib.client.gui.ConfigHomeScreen;
 import nonamecrackers2.crackerslib.client.gui.title.ImageTitle;
-import nonamecrackers2.crackerslib.client.gui.title.TextTitle;
 import nonamecrackers2.mobbattlemusic.MobBattleMusicMod;
 import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.init.MobBattleMusicClientCapabilities;
 import nonamecrackers2.mobbattlemusic.client.manager.BattleMusicManager;
+import nonamecrackers2.mobbattlemusic.client.resource.MusicTracksManager;
 
 public class MobBattleMusicClientEvents
 {
@@ -28,7 +29,12 @@ public class MobBattleMusicClientEvents
 	
 	public static void registerConfigMenuButton(ConfigMenuButtonEvent event)
 	{
-		event.defaultButtonWithSingleCharacter('M', 0xFF85FF75);
+		event.defaultButtonWithSingleCharacter('M', 0xFFFF4949);
+	}
+	
+	public static void registerReloadListeners(RegisterClientReloadListenersEvent event)
+	{
+		event.registerReloadListener(MusicTracksManager.getInstance());
 	}
 	
 	@SubscribeEvent

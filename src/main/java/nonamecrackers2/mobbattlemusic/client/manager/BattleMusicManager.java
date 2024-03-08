@@ -1,5 +1,6 @@
 package nonamecrackers2.mobbattlemusic.client.manager;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -9,6 +10,7 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
@@ -19,7 +21,6 @@ import net.minecraft.client.sounds.MusicManager;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,9 +33,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.TieredItem;
 import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
+import nonamecrackers2.mobbattlemusic.client.resource.MusicTracksManager;
 import nonamecrackers2.mobbattlemusic.client.sound.MobBattleTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.TrackType;
 import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
+import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 import nonamecrackers2.mobbattlemusic.mixin.MixinAbstractSoundInstance;
 import nonamecrackers2.mobbattlemusic.mixin.MixinMusicManagerAccessor;
 import nonamecrackers2.mobbattlemusic.mixin.MixinSoundEngineAccessor;
@@ -45,13 +48,13 @@ public class BattleMusicManager
 	private static final Logger LOGGER = LogManager.getLogger("mobbattlemusic/BattleMusicManager");
 	public static final SoundSource DEFAULT_SOUND_SOURCE = SoundSource.RECORDS;
 	private static final Predicate<LivingEntity> COUNTS_TOWARDS_MOB_COUNT = e -> {
-		return e instanceof Enemy && MobBattleMusicConfig.CLIENT.whiteListMode.get() ? blacklist(e) : !blacklist(e);
+		return e instanceof Enemy && (MobBattleMusicConfig.CLIENT.whiteListMode.get() ? blacklist(e) : !blacklist(e));
 	};
 	private final TargetingConditions targetingConditions = TargetingConditions.forCombat().ignoreLineOfSight().range(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get());
 	private final TargetingConditions panicConditions = this.targetingConditions.copy().range(MobBattleMusicConfig.CLIENT.threatRadius.get());
 	private final Minecraft minecraft;
 	private final ClientLevel level;
-	private final Map<TrackType, MobBattleTrack> tracks = Maps.newEnumMap(TrackType.class);
+	private final Map<TrackType, MobBattleTrack> tracks = Maps.newHashMap();
 	private int maxThreatRefreshTime;
 	private int threatRefreshTimer;
 	private int threatRemovalTimer;
@@ -105,15 +108,15 @@ public class BattleMusicManager
 			}
 		}
 		
-		int enemiesCount = 0;
-		int aggroCount = 0;
 		Mob closestAggressor = null;
 		double distance = -1.0D;
+		MobSelection.Builder builder = MobSelection.builder();
 		for (Mob mob : this.level.getNearbyEntities(Mob.class, this.targetingConditions, this.minecraft.player, this.minecraft.player.getBoundingBox().inflate(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get())))
 		{
 			if (COUNTS_TOWARDS_MOB_COUNT.test(mob) && this.minecraft.player.hasLineOfSight(mob))
 			{
-				if (this.isMobAggressive(mob) && (!MobBattleMusicConfig.CLIENT.onlyCountVisibleMobs.get() || this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox())))
+				boolean viewable = this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox());
+				if (this.isMobAggressive(mob))
 				{
 					double d = mob.distanceTo(this.minecraft.player);
 					if (distance == -1.0D || distance > d)
@@ -121,13 +124,19 @@ public class BattleMusicManager
 						closestAggressor = mob;
 						distance = d;
 					}
-					aggroCount++;
+					builder.add(MobSelection.Type.ATTACKING, mob);
+					if (viewable)
+						builder.add(MobSelection.Type.VIEWABLE_ATTACKING, mob);
 				}
-				enemiesCount++;
+				builder.add(MobSelection.Type.ENEMIES, mob);
+				if (viewable)
+					builder.add(MobSelection.Type.VIEWABLE_ENEMIES, mob);
 			}
 		}
 		if (closestAggressor != null && this.panickingFrom != closestAggressor && this.panicConditions.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
 			this.panic(closestAggressor, MobBattleMusicConfig.CLIENT.threatReevaluationCooldown.get() * 20);
+		
+		MobSelection selection = builder.setPanicTarget(this.panickingFrom).build();
 		
 		var iterator = this.tracks.entrySet().iterator();
 		while (iterator.hasNext())
@@ -141,15 +150,26 @@ public class BattleMusicManager
 			}
 		}
 		
-		TrackType priority = this.getPriorityTrack(enemiesCount, aggroCount);
-		for (TrackType type : TrackType.values())
+		List<TrackType> tracks = MusicTracksManager.getInstance().getTracks();
+		
+		TrackType priority = null;
+		for (TrackType type : tracks)
 		{
-			float trackDesiredVolume = shouldStopTracksForModCompat(this.minecraft.getSoundManager()) ? 0.0F : getTrackVolume(type, enemiesCount, aggroCount);
-			boolean canPlay = type.canPlay();
-			this.initiateAndOrUpdateTrack(type, priority == type && trackDesiredVolume > 0.0F && canPlay, track -> 
+			if (type.canPlay(selection))
+			{
+				priority = type;
+				break;
+			}
+		}
+		
+		for (TrackType type : tracks)
+		{
+			float trackDesiredVolume = shouldStopTracksForModCompat(this.minecraft.getSoundManager()) ? 0.0F : type.getVolume(selection);
+			boolean canPlay = priority == type;
+			this.initiateAndOrUpdateTrack(type, canPlay && trackDesiredVolume > 0.0F, track -> 
 			{
 				float volume = 0.0F;
-				if (canPlay && type == priority)
+				if (canPlay)
 					volume = trackDesiredVolume;
 				track.setTargetedVolume(volume);
 			});
@@ -228,29 +248,6 @@ public class BattleMusicManager
 	public boolean isPlaying()
 	{
 		return !this.tracks.isEmpty();
-	}
-	
-	private @Nullable TrackType getPriorityTrack(int enemyCount, int aggroCount)
-	{
-		if (this.panickingFrom instanceof Player)
-			return TrackType.PLAYER;
-		else if (aggroCount > 0 || this.panickingFrom != null)
-			return TrackType.AGGRESSIVE;
-		else if (enemyCount > 0)
-			return TrackType.NON_AGGRESSIVE;
-		else
-			return null;
-	}
-	
-	private static float getTrackVolume(TrackType type, int enemyCount, int aggroCount)
-	{
-		switch (type)
-		{
-		case NON_AGGRESSIVE:
-			return Mth.clamp((float)enemyCount / (float)MobBattleMusicConfig.CLIENT.maxMobsForMaxVolume.get(), 0.0F, 1.0F);
-		default:
-			return 1.0F;
-		}
 	}
 	
 	private static void fadeAndStopMinecraftMusic(MusicManager manager)
