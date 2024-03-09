@@ -1,13 +1,13 @@
 package nonamecrackers2.mobbattlemusic.client.util;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import org.apache.commons.compress.utils.Lists;
+
 import com.google.common.collect.Maps;
 
 import net.minecraft.util.StringRepresentable;
@@ -17,23 +17,19 @@ import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 
 public class MobSelection
 {
-	private final Map<MobSelection.Type, List<Mob>> mobs;
+	private static final MobSelection.EmptyGroup EMPTY = new MobSelection.EmptyGroup();
+	private final Map<MobSelection.GroupType, MobSelection.Group> groups;
 	private final @Nullable LivingEntity panicTarget;
 	
-	private MobSelection(Map<MobSelection.Type, List<Mob>> mobs, @Nullable LivingEntity panicTarget)
+	private MobSelection(Map<MobSelection.GroupType, MobSelection.Group> groups, @Nullable LivingEntity panicTarget)
 	{
-		this.mobs = mobs;
+		this.groups = groups;
 		this.panicTarget = panicTarget;
 	}
 	
-	public List<Mob> forSelection(MobSelection.Type sel)
+	public MobSelection.Group group(MobSelection.GroupType type)
 	{
-		return this.mobs.get(sel);
-	}
-	
-	public int count(MobSelection.Type sel)
-	{
-		return this.forSelection(sel).size();
+		return this.groups.getOrDefault(type, EMPTY);
 	}
 	
 	public @Nullable LivingEntity panicTarget()
@@ -46,30 +42,65 @@ public class MobSelection
 		return new MobSelection.Builder();
 	}
 	
-	public static MobSelection.Type enemies()
+	public static MobSelection.Selector defaultSelector()
 	{
-		return MobBattleMusicConfig.CLIENT.onlyCountVisibleMobs.get() ? MobSelection.Type.ENEMIES : MobSelection.Type.VIEWABLE_ENEMIES;
+		return MobBattleMusicConfig.CLIENT.onlyCountVisibleMobs.get() ? MobSelection.Selector.ON_SCREEN : MobSelection.Selector.LINE_OF_SIGHT;
 	}
 	
-	public static MobSelection.Type attacking()
+	public static class Group
 	{
-		return MobBattleMusicConfig.CLIENT.onlyCountVisibleMobs.get() ? MobSelection.Type.ATTACKING : MobSelection.Type.VIEWABLE_ATTACKING;
+		private final Map<MobSelection.Selector, List<Mob>> all;
+		
+		Group(Map<MobSelection.Selector, List<Mob>> all)
+		{
+			this.all = all;
+		}
+		
+		public List<Mob> forSelector(MobSelection.Selector selector)
+		{
+			if (this.all.containsKey(selector))
+				return this.all.get(selector);
+			else
+				return Collections.emptyList();
+		}
+		
+		public int count(MobSelection.Selector selector)
+		{
+			return this.forSelector(selector).size();
+		}
+	}
+	
+	static class EmptyGroup extends MobSelection.Group
+	{
+		EmptyGroup()
+		{
+			super(null);
+		}
+		
+		@Override
+		public List<Mob> forSelector(Selector selector)
+		{
+			return Collections.emptyList();
+		}
+		
+		@Override
+		public int count(Selector selector)
+		{
+			return 0;
+		}
 	}
 	
 	public static class Builder
 	{
-		private final Map<MobSelection.Type, List<Mob>> mobs = Maps.newEnumMap(MobSelection.Type.class);
+		private final Map<MobSelection.GroupType, MobSelection.Group> mobs = Maps.newEnumMap(MobSelection.GroupType.class);
 		private @Nullable LivingEntity panicTarget;
 		
-		private Builder()
-		{
-			for (MobSelection.Type sel : MobSelection.Type.values())
-				this.mobs.put(sel, Lists.newArrayList());
-		}
+		private Builder() {}
 		
-		public Builder add(MobSelection.Type sel, Mob mob)
+		public Builder addToGroup(MobSelection.GroupType type, MobSelection.Selector selector, Mob mob)
 		{
-			this.mobs.get(sel).add(mob);
+			MobSelection.Group group = this.mobs.computeIfAbsent(type, t -> new MobSelection.Group(Maps.newEnumMap(MobSelection.Selector.class)));
+			group.all.computeIfAbsent(selector, s -> Lists.newArrayList()).add(mob);
 			return this;
 		}
 		
@@ -81,20 +112,38 @@ public class MobSelection
 		
 		public MobSelection build()
 		{
-			return new MobSelection(this.mobs.entrySet().stream().map(e -> Map.entry(e.getKey(), ImmutableList.copyOf(e.getValue()))).collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue)), this.panicTarget);
+			return new MobSelection(this.mobs, this.panicTarget);
 		}
 	}
 	
-	public static enum Type implements StringRepresentable
+	public static enum GroupType implements StringRepresentable
 	{
 		ENEMIES("enemies"),
-		ATTACKING("attacking"),
-		VIEWABLE_ENEMIES("viewable_enemies"),
-		VIEWABLE_ATTACKING("viewable_attacking");
+		ATTACKING("attacking");
 
 		private final String id;
 		
-		private Type(String id)
+		private GroupType(String id)
+		{
+			this.id = id;
+		}
+		
+		@Override
+		public String getSerializedName()
+		{
+			return this.id;
+		}
+	}
+	
+	public static enum Selector implements StringRepresentable
+	{
+		ANY("any"),
+		LINE_OF_SIGHT("line_of_sight"),
+		ON_SCREEN("on_screen");
+
+		private final String id;
+		
+		private Selector(String id)
 		{
 			this.id = id;
 		}

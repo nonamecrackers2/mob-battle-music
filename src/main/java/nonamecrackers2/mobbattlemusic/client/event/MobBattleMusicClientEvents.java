@@ -1,7 +1,11 @@
 package nonamecrackers2.mobbattlemusic.client.event;
 
+import java.util.List;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.client.event.sound.SoundEngineLoadEvent;
 import net.minecraftforge.event.TickEvent;
@@ -17,6 +21,7 @@ import nonamecrackers2.mobbattlemusic.client.config.MobBattleMusicConfig;
 import nonamecrackers2.mobbattlemusic.client.init.MobBattleMusicClientCapabilities;
 import nonamecrackers2.mobbattlemusic.client.manager.BattleMusicManager;
 import nonamecrackers2.mobbattlemusic.client.resource.MusicTracksManager;
+import nonamecrackers2.mobbattlemusic.client.sound.track.TrackType;
 
 public class MobBattleMusicClientEvents
 {
@@ -35,6 +40,13 @@ public class MobBattleMusicClientEvents
 	public static void registerReloadListeners(RegisterClientReloadListenersEvent event)
 	{
 		event.registerReloadListener(MusicTracksManager.getInstance());
+	}
+	
+	public static void onSoundEngineLoad(SoundEngineLoadEvent event)
+	{
+		Minecraft mc = Minecraft.getInstance();
+		if (mc.level != null)
+			mc.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(BattleMusicManager::reload);
 	}
 	
 	@SubscribeEvent
@@ -57,10 +69,26 @@ public class MobBattleMusicClientEvents
 		}
 	}
 	
-	public static void onSoundEngineLoad(SoundEngineLoadEvent event)
+	@SubscribeEvent
+	public static void onRenderDebugOverlay(CustomizeGuiOverlayEvent.DebugText event)
 	{
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.level != null)
-			mc.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(BattleMusicManager::reload);
+		if (mc.options.renderDebug)
+		{
+			List<String> text = event.getRight();
+			text.add("");
+			text.add(MobBattleMusicMod.MODID + ": " + MobBattleMusicMod.getModVersion());
+			if (mc.level != null)
+			{
+				mc.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> 
+				{
+					TrackType track = manager.getPriorityTrack();
+					text.add("Priority track: " + (track == null ? ChatFormatting.RED + "none" : ChatFormatting.GREEN + track.toString()));
+					text.add("Tracks playing:");
+					for (TrackType playing : manager.getPlayingTracks())
+						text.add(playing.toString());
+				});
+			}
+		}
 	}
 }

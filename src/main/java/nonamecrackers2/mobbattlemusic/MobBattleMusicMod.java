@@ -1,5 +1,7 @@
 package nonamecrackers2.mobbattlemusic;
 
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
@@ -18,9 +20,11 @@ import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
 public class MobBattleMusicMod
 {
 	public static final String MODID = "mobbattlemusic";
+	private static ArtifactVersion version;
 	
 	public MobBattleMusicMod()
 	{
+		version = ModLoadingContext.get().getActiveContainer().getModInfo().getVersion();
 		IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		modEventBus.addListener(MobBattleMusicClientEvents::registerReloadListeners);
 		modEventBus.addListener(this::clientSetup);
@@ -45,5 +49,10 @@ public class MobBattleMusicMod
 	public static ResourceLocation id(String path)
 	{
 		return new ResourceLocation(MODID, path);
+	}
+	
+	public static ArtifactVersion getModVersion()
+	{
+		return version;
 	}
 }

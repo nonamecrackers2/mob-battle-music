@@ -14,7 +14,7 @@ public class AggressiveTrack extends TrackType
 	@Override
 	public boolean canPlay(MobSelection selection)
 	{
-		return MobBattleMusicConfig.CLIENT.aggressiveTrackEnabled.get() && (selection.count(MobSelection.attacking()) > 0 || selection.panicTarget() != null);
+		return MobBattleMusicConfig.CLIENT.aggressiveTrackEnabled.get() && (selection.group(MobSelection.GroupType.ATTACKING).count(MobSelection.defaultSelector()) > 0 || selection.panicTarget() != null);
 	}
 	
 	@Override

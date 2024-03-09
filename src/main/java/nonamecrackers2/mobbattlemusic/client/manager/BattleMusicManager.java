@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
@@ -26,6 +26,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.entity.monster.AbstractIllager;
+import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.warden.Warden;
@@ -55,6 +57,7 @@ public class BattleMusicManager
 	private final Minecraft minecraft;
 	private final ClientLevel level;
 	private final Map<TrackType, MobBattleTrack> tracks = Maps.newHashMap();
+	private @Nullable TrackType priorityTrack;
 	private int maxThreatRefreshTime;
 	private int threatRefreshTimer;
 	private int threatRemovalTimer;
@@ -113,24 +116,33 @@ public class BattleMusicManager
 		MobSelection.Builder builder = MobSelection.builder();
 		for (Mob mob : this.level.getNearbyEntities(Mob.class, this.targetingConditions, this.minecraft.player, this.minecraft.player.getBoundingBox().inflate(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get())))
 		{
-			if (COUNTS_TOWARDS_MOB_COUNT.test(mob) && this.minecraft.player.hasLineOfSight(mob))
+			if (COUNTS_TOWARDS_MOB_COUNT.test(mob))
 			{
 				boolean viewable = this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox());
+				boolean lineOfSight = this.minecraft.player.hasLineOfSight(mob);
 				if (this.isMobAggressive(mob))
 				{
-					double d = mob.distanceTo(this.minecraft.player);
-					if (distance == -1.0D || distance > d)
+					builder.addToGroup(MobSelection.GroupType.ATTACKING, MobSelection.Selector.ANY, mob);
+					if (lineOfSight)
 					{
-						closestAggressor = mob;
-						distance = d;
+						double d = mob.distanceTo(this.minecraft.player);
+						if (distance == -1.0D || distance > d)
+						{
+							closestAggressor = mob;
+							distance = d;
+						}
+						builder.addToGroup(MobSelection.GroupType.ATTACKING, MobSelection.Selector.LINE_OF_SIGHT, mob);
+						if (viewable)
+							builder.addToGroup(MobSelection.GroupType.ATTACKING, MobSelection.Selector.ON_SCREEN, mob);
 					}
-					builder.add(MobSelection.Type.ATTACKING, mob);
-					if (viewable)
-						builder.add(MobSelection.Type.VIEWABLE_ATTACKING, mob);
 				}
-				builder.add(MobSelection.Type.ENEMIES, mob);
-				if (viewable)
-					builder.add(MobSelection.Type.VIEWABLE_ENEMIES, mob);
+				builder.addToGroup(MobSelection.GroupType.ENEMIES, MobSelection.Selector.ANY, mob);
+				if (lineOfSight)
+				{
+					builder.addToGroup(MobSelection.GroupType.ENEMIES, MobSelection.Selector.LINE_OF_SIGHT, mob);
+					if (viewable)
+						builder.addToGroup(MobSelection.GroupType.ENEMIES, MobSelection.Selector.ON_SCREEN, mob);
+				}
 			}
 		}
 		if (closestAggressor != null && this.panickingFrom != closestAggressor && this.panicConditions.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
@@ -161,6 +173,7 @@ public class BattleMusicManager
 				break;
 			}
 		}
+		this.priorityTrack = priority;
 		
 		for (TrackType type : tracks)
 		{
@@ -185,6 +198,10 @@ public class BattleMusicManager
 			return warden.getClientAngerLevel() > 50;
 		else if (mob instanceof Witch)
 			return mob.distanceTo(this.minecraft.player) < 12.0D;
+		else if (mob instanceof Blaze blaze)
+			return blaze.isOnFire();
+		else if (mob instanceof AbstractIllager illager)
+			return illager.getArmPose() == AbstractIllager.IllagerArmPose.ATTACKING || illager.getArmPose() == AbstractIllager.IllagerArmPose.SPELLCASTING || illager.getArmPose() == AbstractIllager.IllagerArmPose.CROSSBOW_HOLD || illager.getArmPose() == AbstractIllager.IllagerArmPose.CROSSBOW_CHARGE;
 		else
 			return mob.isAggressive();
 	}
@@ -248,6 +265,16 @@ public class BattleMusicManager
 	public boolean isPlaying()
 	{
 		return !this.tracks.isEmpty();
+	}
+	
+	public @Nullable TrackType getPriorityTrack()
+	{
+		return this.priorityTrack;
+	}
+	
+	public List<TrackType> getPlayingTracks()
+	{
+		return ImmutableList.copyOf(this.tracks.keySet());
 	}
 	
 	private static void fadeAndStopMinecraftMusic(MusicManager manager)

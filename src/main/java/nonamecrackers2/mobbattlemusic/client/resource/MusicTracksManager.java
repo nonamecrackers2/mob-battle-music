@@ -2,6 +2,7 @@ package nonamecrackers2.mobbattlemusic.client.resource;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,21 +11,28 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.mojang.serialization.JsonOps;
 
-import net.minecraft.ResourceLocationException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.registries.ForgeRegistries;
+import nonamecrackers2.mobbattlemusic.client.sound.track.MobListTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.MobSpecificTrack;
+import nonamecrackers2.mobbattlemusic.client.sound.track.MobTagTrack;
+import nonamecrackers2.mobbattlemusic.client.sound.track.MobTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.TrackType;
+import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicUtils;
 import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 
 public class MusicTracksManager extends SimpleJsonResourceReloadListener
@@ -66,10 +74,32 @@ public class MusicTracksManager extends SimpleJsonResourceReloadListener
 				{
 				case "mob_specific":
 				{
-					if (priority >= list.size())
-						list.add(parseMobSpecific(object, track));
-					else
-						list.add(priority, parseMobSpecific(object, track));
+					insert(list, parseMobTrack(object, track, (t, f, g, s) -> {
+						return new MobSpecificTrack(parseEntityType(GsonHelper.getAsString(object, "mob")), t, f, g, s);
+					}), priority);
+					break;
+				}
+				case "mob_list":
+				{
+					insert(list, parseMobTrack(object, track, (t, f, g, s) -> 
+					{
+						JsonArray array = GsonHelper.getAsJsonArray(object, "mobs");
+						List<EntityType<?>> entityTypes = Lists.newArrayList();
+						for (JsonElement element : array)
+							entityTypes.add(parseEntityType(GsonHelper.convertToString(element, "entity type")));
+						return new MobListTrack(entityTypes, t, f, g, s);
+					}), priority);
+					break;
+				}
+				case "mob_tag":
+				{
+					insert(list, parseMobTrack(object, track, (t, f, g, s) -> 
+					{
+						TagKey<EntityType<?>> tag = TagKey.codec(Registries.ENTITY_TYPE).parse(JsonOps.INSTANCE, object.get("tag")).resultOrPartial(m -> {
+							throw new JsonSyntaxException(m);
+						}).get();
+						return new MobTagTrack(tag, t, f, g, s);
+					}), priority);
 					break;
 				}
 				default:
@@ -84,36 +114,48 @@ public class MusicTracksManager extends SimpleJsonResourceReloadListener
 		this.tracks = ImmutableList.copyOf(list);
 	}
 	
+	private static void insert(List<TrackType> list, TrackType track, int index)
+	{
+		if (index >= list.size())
+			list.add(track);
+		else
+			list.add(index, track);
+	}
+	
 	public List<TrackType> getTracks()
 	{
 		return this.tracks;
 	}
 	
-	private static MobSpecificTrack parseMobSpecific(JsonObject object, ResourceLocation track) throws JsonSyntaxException, ResourceLocationException, NullPointerException
+	private static <T extends MobTrack> T parseMobTrack(JsonObject object, ResourceLocation track, MusicTracksManager.MobTrackBuilder<T> builder)
 	{
 		int fadeTime = GsonHelper.getAsInt(object, "fade_time");
-		String rawId = GsonHelper.getAsString(object, "mob");
-		ResourceLocation id = new ResourceLocation(rawId);
-		EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(id);
-		if (type == null)
-			throw new NullPointerException("Unknown entity with id: '" + rawId + "'");
-		String selectorRaw = GsonHelper.getAsString(object, "mob_selector");
-		MobSelection.Type selector = null;
-		for (MobSelection.Type t : MobSelection.Type.values())
-		{
-			if (selectorRaw.equals(t.getSerializedName()))
-			{
-				selector = t;
-				break;
-			}
-		}
-		if (selector == null)
-			throw new NullPointerException("Not a valid mob selector: '" + selectorRaw + "'");
-		return new MobSpecificTrack(type, track, fadeTime, selector);
+		MobSelection.GroupType group = MobBattleMusicUtils.parseEnum(MobSelection.GroupType.class, GsonHelper.getAsString(object, "group")).resultOrPartial(m -> {
+			throw new NoSuchElementException(m);
+		}).get();
+		MobSelection.Selector selector = MobBattleMusicUtils.parseEnum(MobSelection.Selector.class, GsonHelper.getAsString(object, "selector")).resultOrPartial(m -> {
+			throw new NoSuchElementException(m);
+		}).get();
+		return builder.make(track, fadeTime, group, selector);
 	}
-
+	
+	private static EntityType<?> parseEntityType(String rawId)
+	{
+		ResourceLocation id = new ResourceLocation(rawId);
+		EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(id);
+		if (entityType == null)
+			throw new NullPointerException("Unknown entity with id: '" + id + "'");
+		return entityType;
+	}
+	
 	public static MusicTracksManager getInstance()
 	{
 		return INSTANCE;
+	}
+	
+	@FunctionalInterface
+	public static interface MobTrackBuilder<T extends MobTrack>
+	{
+		T make(ResourceLocation track, int fadeTime, MobSelection.GroupType group, MobSelection.Selector selector);
 	}
 }

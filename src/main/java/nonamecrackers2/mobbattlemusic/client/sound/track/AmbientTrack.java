@@ -15,7 +15,7 @@ public class AmbientTrack extends TrackType
 	@Override
 	public boolean canPlay(MobSelection selection)
 	{
-		return MobBattleMusicConfig.CLIENT.nonAggressiveTrackEnabled.get() && selection.count(MobSelection.enemies()) > 0;
+		return MobBattleMusicConfig.CLIENT.nonAggressiveTrackEnabled.get() && selection.group(MobSelection.GroupType.ENEMIES).count(MobSelection.Selector.LINE_OF_SIGHT) > 0;
 	}
 	
 	@Override
@@ -27,6 +27,6 @@ public class AmbientTrack extends TrackType
 	@Override
 	public float getVolume(MobSelection selection)
 	{
-		return Mth.clamp((float)selection.count(MobSelection.enemies()) / (float)MobBattleMusicConfig.CLIENT.maxMobsForMaxVolume.get(), 0.0F, 1.0F);
+		return Mth.clamp((float)selection.group(MobSelection.GroupType.ENEMIES).count(MobSelection.defaultSelector()) / (float)MobBattleMusicConfig.CLIENT.maxMobsForMaxVolume.get(), 0.0F, 1.0F);
 	}
 }
