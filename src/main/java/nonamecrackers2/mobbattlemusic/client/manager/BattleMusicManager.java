@@ -15,6 +15,7 @@ import com.google.common.collect.Maps;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.MusicManager;
@@ -41,6 +42,7 @@ import nonamecrackers2.mobbattlemusic.client.sound.track.TrackType;
 import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicCompat;
 import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
 import nonamecrackers2.mobbattlemusic.mixin.MixinAbstractSoundInstance;
+import nonamecrackers2.mobbattlemusic.mixin.MixinLevelRenderer;
 import nonamecrackers2.mobbattlemusic.mixin.MixinMusicManagerAccessor;
 import nonamecrackers2.mobbattlemusic.mixin.MixinSoundEngineAccessor;
 import nonamecrackers2.mobbattlemusic.mixin.MixinSoundManagerAccessor;
@@ -118,7 +120,7 @@ public class BattleMusicManager
 		{
 			if (COUNTS_TOWARDS_MOB_COUNT.test(mob))
 			{
-				boolean viewable = this.minecraft.levelRenderer.getFrustum().isVisible(mob.getBoundingBox());
+				boolean viewable = this.getFrustum().isVisible(mob.getBoundingBox());
 				boolean lineOfSight = this.minecraft.player.hasLineOfSight(mob);
 				if (this.isMobAggressive(mob))
 				{
@@ -303,5 +305,13 @@ public class BattleMusicManager
 				return true;
 		}
 		return false;
+	}
+	
+	private Frustum getFrustum()
+	{
+		MixinLevelRenderer mixin = (MixinLevelRenderer)this.minecraft.levelRenderer;
+		Frustum cull = mixin.mobbattlemusic$getCullingFrustum();
+		Frustum captured = mixin.mobbattlemusic$getCapturedFrustum();
+		return captured != null ? captured : cull;
 	}
 }

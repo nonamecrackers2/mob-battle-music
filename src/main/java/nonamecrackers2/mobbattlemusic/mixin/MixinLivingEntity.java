@@ -26,7 +26,7 @@ public abstract class MixinLivingEntity extends Entity
 	{
 		if ((Entity)this instanceof LocalPlayer player && player == Minecraft.getInstance().player)
 		{
-			this.level().getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> {
+			this.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> {
 				manager.wasAttacked(source);
 			});
 		}

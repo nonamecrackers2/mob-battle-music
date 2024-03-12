@@ -122,8 +122,9 @@ repositories {
     //     dir 'libs'
     // }
     maven {
-    	url "https://raw.githubusercontent.com/nonamecrackers2/maven/main"
-    }
+	   	name "nonamecrackers2Maven"
+	    url "https://maven.nonamecrackers2.dev/releases"
+	}
     maven {
         url "https://cursemaven.com"
     }
@@ -160,7 +161,7 @@ dependencies {
     	jarJar.ranged(it, "[${minecraft_version}-${crackerslib_version},)")
     }
     
-    implementation fg.deobf("nonamecrackers2:crackerslib-forge:${minecraft_version}-${crackerslib_version}")
+    implementation "nonamecrackers2:crackerslib-forge:${minecraft_version}-${crackerslib_version}"
 }
 
 mixin {

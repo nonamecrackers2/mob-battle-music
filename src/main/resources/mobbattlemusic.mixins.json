@@ -12,7 +12,8 @@
 		"MixinAbstractSoundInstance",
 		"MixinMusicManagerAccessor",
 		"MixinSoundEngineAccessor",
-		"MixinSoundManagerAccessor"
+		"MixinSoundManagerAccessor",
+		"MixinLevelRenderer"
 	],
 	"minVersion": "0.8"
 }

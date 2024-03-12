@@ -61,9 +61,9 @@ public class MobBattleMusicClientEvents
 	public static void onPlayerAttack(AttackEntityEvent event)
 	{
 		Player player = event.getEntity();
-		if (player.level().isClientSide())
+		if (player.level.isClientSide())
 		{
-			player.level().getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> {
+			player.level.getCapability(MobBattleMusicClientCapabilities.MUSIC_MANAGER).ifPresent(manager -> {
 				manager.onAttack(event.getTarget());
 			});
 		}
