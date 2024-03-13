@@ -111,8 +111,6 @@ public class BattleMusicManager
 			}
 		}
 		
-		Mob closestAggressor = null;
-		double distance = -1.0D;
 		MobSelection.Builder builder = MobSelection.builder();
 		for (Mob mob : this.level.getNearbyEntities(Mob.class, this.targetingConditions, this.minecraft.player, this.minecraft.player.getBoundingBox().inflate(MobBattleMusicConfig.CLIENT.maxMobSearchRadius.get())))
 		{
@@ -125,12 +123,6 @@ public class BattleMusicManager
 					builder.addToGroup(MobSelection.GroupType.ATTACKING, MobSelection.Selector.ANY, mob);
 					if (lineOfSight)
 					{
-						double d = mob.distanceTo(this.minecraft.player);
-						if (distance == -1.0D || distance > d)
-						{
-							closestAggressor = mob;
-							distance = d;
-						}
 						builder.addToGroup(MobSelection.GroupType.ATTACKING, MobSelection.Selector.LINE_OF_SIGHT, mob);
 						if (viewable)
 							builder.addToGroup(MobSelection.GroupType.ATTACKING, MobSelection.Selector.ON_SCREEN, mob);
@@ -145,10 +137,22 @@ public class BattleMusicManager
 				}
 			}
 		}
+		MobSelection selection = builder.setPanicTarget(this.panickingFrom).build();
+		
+		Mob closestAggressor = null;
+		double distance = -1.0D;
+		for (Mob mob : selection.group(MobSelection.GroupType.ATTACKING).forSelector(MobSelection.defaultSelector()))
+		{
+			double d = mob.distanceTo(this.minecraft.player);
+			if (distance == -1.0D || distance > d)
+			{
+				closestAggressor = mob;
+				distance = d;
+			}
+		}
 		if (closestAggressor != null && this.panickingFrom != closestAggressor && this.panicConditions.test(this.minecraft.player, closestAggressor) && !(this.panickingFrom instanceof Player))
 			this.panic(closestAggressor, MobBattleMusicConfig.CLIENT.threatReevaluationCooldown.get() * 20);
 		
-		MobSelection selection = builder.setPanicTarget(this.panickingFrom).build();
 		
 		var iterator = this.tracks.entrySet().iterator();
 		while (iterator.hasNext())
