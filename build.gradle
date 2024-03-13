@@ -121,8 +121,8 @@ repositories {
     // flatDir {
     //     dir 'libs'
     // }
-    maven {
-	   	name "nonamecrackers2Maven"
+	maven {
+	    name "nonamecrackers2Maven"
 	    url "https://maven.nonamecrackers2.dev/releases"
 	}
     maven {
