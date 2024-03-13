@@ -13,6 +13,6 @@ public class MobBattleMusicUtils
 			if (constant.getSerializedName().equals(id))
 				return DataResult.success(constant);
 		}
-		return DataResult.error(() -> "Unknown " + clazz.getSimpleName().toUpperCase() + " '" + id + "'");
+		return DataResult.error("Unknown " + clazz.getSimpleName().toUpperCase() + " '" + id + "'");
 	}
 }

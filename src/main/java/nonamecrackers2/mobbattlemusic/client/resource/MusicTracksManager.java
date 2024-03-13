@@ -18,7 +18,7 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -95,7 +95,7 @@ public class MusicTracksManager extends SimpleJsonResourceReloadListener
 				{
 					insert(list, parseMobTrack(object, track, (t, f, g, s) -> 
 					{
-						TagKey<EntityType<?>> tag = TagKey.codec(Registries.ENTITY_TYPE).parse(JsonOps.INSTANCE, object.get("tag")).resultOrPartial(m -> {
+						TagKey<EntityType<?>> tag = TagKey.codec(Registry.ENTITY_TYPE_REGISTRY).parse(JsonOps.INSTANCE, object.get("tag")).resultOrPartial(m -> {
 							throw new JsonSyntaxException(m);
 						}).get();
 						return new MobTagTrack(tag, t, f, g, s);
