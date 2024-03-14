@@ -33,7 +33,7 @@ description='''${mod_description}'''
 [[dependencies.${mod_id}]]
     modId="crackerslib"
     mandatory=true
-    versionRange="[0.1,)"
+    versionRange="${crackerslib_version_range}"
     ordering="NONE"
     side="BOTH"
 
