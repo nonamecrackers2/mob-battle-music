@@ -3,6 +3,7 @@ package nonamecrackers2.mobbattlemusic.client.resource;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +32,7 @@ import nonamecrackers2.mobbattlemusic.client.sound.track.MobListTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.MobSpecificTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.MobTagTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.MobTrack;
+import nonamecrackers2.mobbattlemusic.client.sound.track.PlayerSpecificTrack;
 import nonamecrackers2.mobbattlemusic.client.sound.track.TrackType;
 import nonamecrackers2.mobbattlemusic.client.util.MobBattleMusicUtils;
 import nonamecrackers2.mobbattlemusic.client.util.MobSelection;
@@ -100,6 +102,21 @@ public class MusicTracksManager extends SimpleJsonResourceReloadListener
 						}).get();
 						return new MobTagTrack(tag, t, f, g, s);
 					}), priority);
+					break;
+				}
+				case "player_specific":
+				{
+					String name = GsonHelper.getAsString(object, "player_name");
+					int fadeTime = GsonHelper.getAsInt(object, "fade_time");
+					insert(list, new PlayerSpecificTrack(name, false, track, fadeTime), priority);
+					break;
+				}
+				case "player_specific_uuid":
+				{
+					String uuid = GsonHelper.getAsString(object, "player_uuid");
+					UUID.fromString(uuid);
+					int fadeTime = GsonHelper.getAsInt(object, "fade_time");
+					insert(list, new PlayerSpecificTrack(uuid, true, track, fadeTime), priority);
 					break;
 				}
 				default:

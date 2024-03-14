@@ -87,6 +87,7 @@ public class MobBattleMusicClientEvents
 					text.add("Tracks playing:");
 					for (TrackType playing : manager.getPlayingTracks())
 						text.add(playing.toString());
+					text.add("Panic target: " + (manager.getPanicTarget() == null ? "none" : manager.getPanicTarget().getDisplayName().getString()));
 				});
 			}
 		}

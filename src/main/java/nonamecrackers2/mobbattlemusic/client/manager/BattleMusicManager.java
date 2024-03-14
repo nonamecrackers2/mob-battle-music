@@ -243,7 +243,7 @@ public class BattleMusicManager
 	{
 		if (entity instanceof Mob mob && entity instanceof Enemy && !(this.panickingFrom instanceof Player))
 			this.panic(mob, MobBattleMusicConfig.CLIENT.threatReevaluationCooldown.get() * 20);
-		else if (entity instanceof Player player && player != this.minecraft.player && (MobBattleMusicConfig.CLIENT.punchingCountsAsViolence.get() || this.minecraft.player.getMainHandItem().getItem() instanceof TieredItem))
+		else if (entity instanceof Player player && !player.isCreative() && player != this.minecraft.player && (MobBattleMusicConfig.CLIENT.punchingCountsAsViolence.get() || this.minecraft.player.getMainHandItem().getItem() instanceof TieredItem))
 			this.panic(player, MobBattleMusicConfig.CLIENT.playerReevaluationCooldown.get() * 20);
 	}
 	
@@ -279,6 +279,11 @@ public class BattleMusicManager
 	public List<TrackType> getPlayingTracks()
 	{
 		return ImmutableList.copyOf(this.tracks.keySet());
+	}
+	
+	public @Nullable LivingEntity getPanicTarget()
+	{
+		return this.panickingFrom;
 	}
 	
 	private static void fadeAndStopMinecraftMusic(MusicManager manager)
