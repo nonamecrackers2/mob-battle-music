@@ -7,7 +7,6 @@ import com.google.common.collect.Lists;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import nonamecrackers2.crackerslib.common.config.ConfigHelper;
-import nonamecrackers2.crackerslib.common.config.ReloadType;
 import nonamecrackers2.mobbattlemusic.MobBattleMusicMod;
 
 public class MobBattleMusicConfig
@@ -44,55 +43,55 @@ public class MobBattleMusicConfig
 		
 		public ClientConfig(ForgeConfigSpec.Builder builder)
 		{
-			super(MobBattleMusicMod.MODID);
+			super(builder, MobBattleMusicMod.MODID);
 			
-			this.maxMobSearchRadius = this.createRangedIntValue(builder, 64, 4, 256, "maxMobSearchRadius", ReloadType.GAME, "The radius mobs must be in in order to count towards music tracks playing");
+			this.maxMobSearchRadius = this.createRangedIntValue(64, 4, 256, "maxMobSearchRadius", true, "The radius mobs must be in in order to count towards music tracks playing");
 
-			this.threatRadius = this.createRangedIntValue(builder, 24, 4, 256, "threatRadius", ReloadType.GAME, "Specifies the distance the nearest enemy threat must be in in order for the aggressive/player music tracks to continue to play");
+			this.threatRadius = this.createRangedIntValue(24, 4, 256, "threatRadius", true, "Specifies the distance the nearest enemy threat must be in in order for the aggressive/player music tracks to continue to play");
 			
-			this.threatReevaluationCooldown = this.createRangedIntValue(builder, 5, 1, 300, "threatReevaluationCooldown", ReloadType.NONE, "Specifies the time (in seconds) for the current threat that causes mob-based attacking tracks to play to be reevaluated");
+			this.threatReevaluationCooldown = this.createRangedIntValue(5, 1, 300, "threatReevaluationCooldown", false, "Specifies the time (in seconds) for the current threat that causes mob-based attacking tracks to play to be reevaluated");
 			
-			this.onlyCountVisibleMobs = this.createValue(builder, true, "onlyCountVisibleMobs", ReloadType.NONE, "If enabled, the mob-based attacking tracks will only play for threats that the player can see on screen");
+			this.onlyCountVisibleMobs = this.createValue(true, "onlyCountVisibleMobs", false, "If enabled, the mob-based attacking tracks will only play for threats that the player can see on screen");
 			
-			this.ignoredMobs = this.createListValue(builder, String.class, () -> {
+			this.ignoredMobs = this.createListValue(String.class, () -> {
 				return Lists.newArrayList("minecraft:creeper");
 			}, v -> {
 				return ResourceLocation.isValidResourceLocation(v);
-			}, "ignoredMobs", ReloadType.NONE, "A list of mobs that should NOT be considered towards music tracks playing");
+			}, "ignoredMobs", false, "A list of mobs that should NOT be considered towards music tracks playing");
 			
-			this.whiteListMode = this.createValue(builder, false, "whiteListMode", ReloadType.NONE, "Specifies if the ignored mob list should be used a whitelist instead of a blacklist");
+			this.whiteListMode = this.createValue(false, "whiteListMode", false, "Specifies if the ignored mob list should be used a whitelist instead of a blacklist");
 			
-			this.musicTrackEmptyTime = this.createRangedIntValue(builder, 15, 1, 300, "musicTrackEmptyTime", ReloadType.NONE, "Specifies the time (in seconds) that a music track must not be playing for it to stop completely. Higher time will make it so music tracks won't restart as much if they fade back in for whatever reason");
+			this.musicTrackEmptyTime = this.createRangedIntValue(15, 1, 300, "musicTrackEmptyTime", false, "Specifies the time (in seconds) that a music track must not be playing for it to stop completely. Higher time will make it so music tracks won't restart as much if they fade back in for whatever reason");
 			
-			this.calmDownTime = this.createRangedIntValue(builder, 5, 1, 300, "calmDownTime", ReloadType.NONE, "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked");
+			this.calmDownTime = this.createRangedIntValue(5, 1, 300, "calmDownTime", false, "Specifies the time (in seconds) after there is no longer a nearby threat for the aggressive/player music tracks to stop playing. Effectively acts as the player 'calming down' after being attacked");
 			
 			builder.comment("Non-aggressive music track").push("non_aggro");
 			
-			this.nonAggressiveTrackEnabled = this.createValue(builder, true, "nonAggressiveTrackEnabled", ReloadType.NONE, "Specifies if the non-aggressive music track should play at all");
+			this.nonAggressiveTrackEnabled = this.createValue(true, "nonAggressiveTrackEnabled", false, "Specifies if the non-aggressive music track should play at all");
 			
-			this.nonAggressiveFadeTime = this.createRangedDoubleValue(builder, 6.0D, 0.05D, 60.0D, "nonAggressiveFadeTime", ReloadType.NONE, "The time (in seconds) for the non-aggressive music track to fade in/out");
+			this.nonAggressiveFadeTime = this.createRangedDoubleValue(6.0D, 0.05D, 60.0D, "nonAggressiveFadeTime", false, "The time (in seconds) for the non-aggressive music track to fade in/out");
 			
-			this.maxMobsForMaxVolume = this.createRangedIntValue(builder, 5, 1, 100, "maxMobsForMaxVolume", ReloadType.NONE, "The maximum amount of mobs required for the non-aggressive background music track to reach full volume. Set to '1' for this track type to play at full volume constantly");
+			this.maxMobsForMaxVolume = this.createRangedIntValue(5, 1, 100, "maxMobsForMaxVolume", false, "The maximum amount of mobs required for the non-aggressive background music track to reach full volume. Set to '1' for this track type to play at full volume constantly");
 			
 			builder.pop();
 			
 			builder.comment("Aggressive music track").push("aggro");
 			
-			this.aggressiveTrackEnabled = this.createValue(builder, true, "aggressiveTrackEnabled", ReloadType.NONE, "Specifies if the aggressive music track should play at all");
+			this.aggressiveTrackEnabled = this.createValue(true, "aggressiveTrackEnabled", false, "Specifies if the aggressive music track should play at all");
 			
-			this.aggressiveFadeTime = this.createRangedDoubleValue(builder, 2.0D, 0.05D, 60.0D, "aggressiveFadeTime", ReloadType.NONE, "The time (in seconds) for the aggressive music track to fade in/out");
+			this.aggressiveFadeTime = this.createRangedDoubleValue(2.0D, 0.05D, 60.0D, "aggressiveFadeTime", false, "The time (in seconds) for the aggressive music track to fade in/out");
 			
 			builder.pop();
 			
 			builder.comment("Player music track").push("player");
 			
-			this.playerTrackEnabled = this.createValue(builder, true, "playerTrackEnabled", ReloadType.NONE, "Specifies if the player music track should play at all");
+			this.playerTrackEnabled = this.createValue(true, "playerTrackEnabled", false, "Specifies if the player music track should play at all");
 			
-			this.playerFadeTime = this.createRangedDoubleValue(builder, 1.0D, 0.05D, 60.0D, "playerFadeTime", ReloadType.NONE, "The time (in seconds) for the player music track to fade in/out");
+			this.playerFadeTime = this.createRangedDoubleValue(1.0D, 0.05D, 60.0D, "playerFadeTime", false, "The time (in seconds) for the player music track to fade in/out");
 			
-			this.playerReevaluationCooldown = this.createRangedIntValue(builder, 20, 1, 300, "playerReevaluationCooldown", ReloadType.NONE, "Specifies the time (in seconds) for the current player threat that is causing the player music track to play to be reevaluated. Will cause the player track to stop playing if the player is no longer attacking or being a threat");
+			this.playerReevaluationCooldown = this.createRangedIntValue(20, 1, 300, "playerReevaluationCooldown", false, "Specifies the time (in seconds) for the current player threat that is causing the player music track to play to be reevaluated. Will cause the player track to stop playing if the player is no longer attacking or being a threat");
 			
-			this.punchingCountsAsViolence = this.createValue(builder, false, "punchingCountsAsViolence", ReloadType.NONE, "Specifies if punching a player should count towards the player track playing");
+			this.punchingCountsAsViolence = this.createValue(false, "punchingCountsAsViolence", false, "Specifies if punching a player should count towards the player track playing");
 			
 			builder.pop();
 		}
